@@ -887,19 +887,31 @@ class _ImageCreatorForm extends StatelessWidget {
           ),
 
           // Color Scheme
-          AppDropdownField(
-            label: 'COLOR SCHEME',
-            value: vm.imageConfig.colorScheme,
-            items: const [
-              'Orange & White (Brand Colors)',
-              'Blue & White (Professional)',
-              'Green & White (Education)',
-              'Red & Black (Bold)',
-              'Purple & Gold (Premium)',
-              'Custom / Auto-detect',
-            ],
-            onChanged: (val) => vm.updateColorScheme(val!),
+          const AppFormLabel('COLOR SCHEME'),
+          const SizedBox(height: 10),
+          Wrap(
+            spacing: 10,
+            runSpacing: 10,
+            children: const [
+              _ColorSchemeData('Orange & White (Brand Colors)', Color(0xFFF0A030), Colors.white),
+              _ColorSchemeData('Navy Blue & Gold', Color(0xFF1B2A4A), Color(0xFFD4A017)),
+              _ColorSchemeData('Green & White', Color(0xFF2E7D32), Colors.white),
+              _ColorSchemeData('Purple & Silver', Color(0xFF6A1B9A), Color(0xFFC0C0C0)),
+              _ColorSchemeData('Red & White', Color(0xFFD32F2F), Colors.white),
+              _ColorSchemeData('Teal & Orange', Color(0xFF00897B), Color(0xFFF0A030)),
+              _ColorSchemeData('Black & Gold (Premium)', Color(0xFF212121), Color(0xFFD4A017)),
+              _ColorSchemeData('Pastel Soft Tones', Color(0xFFB39DDB), Color(0xFFF8BBD0)),
+            ].map((data) {
+              return _ColorSchemeChip(
+                label: data.label,
+                color1: data.color1,
+                color2: data.color2,
+                isSelected: vm.imageConfig.colorScheme == data.label,
+                onTap: () => vm.updateColorScheme(data.label),
+              );
+            }).toList(),
           ),
+          const SizedBox(height: 16),
 
           // Include Text Overlay toggle
           Row(
@@ -1033,4 +1045,113 @@ class _VariantChip extends StatelessWidget {
       ),
     );
   }
+}
+
+class _ColorSchemeData {
+  final String label;
+  final Color color1;
+  final Color color2;
+
+  const _ColorSchemeData(this.label, this.color1, this.color2);
+}
+
+class _ColorSchemeChip extends StatelessWidget {
+  final String label;
+  final Color color1;
+  final Color color2;
+  final bool isSelected;
+  final VoidCallback onTap;
+
+  const _ColorSchemeChip({
+    required this.label,
+    required this.color1,
+    required this.color2,
+    required this.isSelected,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.all(10),
+        decoration: BoxDecoration(
+          color: isSelected
+              ? AppColors.secondary.withValues(alpha: 0.08)
+              : Colors.transparent,
+          borderRadius: BorderRadius.circular(10),
+          border: Border.all(
+            color: isSelected
+                ? AppColors.secondary
+                : const Color(0xFFE0E0E0),
+          ),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            // Diagonal two-tone square
+            ClipRRect(
+              borderRadius: BorderRadius.circular(6),
+              child: CustomPaint(
+                size: const Size(28, 28),
+                painter: _DiagonalColorPainter(color1, color2),
+              ),
+            ),
+            const SizedBox(width: 8),
+            Text(
+              label,
+              style: TextStyle(
+                fontSize: 11,
+                fontWeight: FontWeight.w600,
+                color: isSelected
+                    ? AppColors.secondary
+                    : AppColors.primaryDark,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _DiagonalColorPainter extends CustomPainter {
+  final Color color1;
+  final Color color2;
+
+  _DiagonalColorPainter(this.color1, this.color2);
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint1 = Paint()..color = color1;
+    final paint2 = Paint()..color = color2;
+
+    // Bottom-left triangle (color1)
+    final path1 = Path()
+      ..moveTo(0, 0)
+      ..lineTo(0, size.height)
+      ..lineTo(size.width, size.height)
+      ..close();
+    canvas.drawPath(path1, paint1);
+
+    // Top-right triangle (color2)
+    final path2 = Path()
+      ..moveTo(0, 0)
+      ..lineTo(size.width, 0)
+      ..lineTo(size.width, size.height)
+      ..close();
+    canvas.drawPath(path2, paint2);
+
+    // Border for white colors
+    final borderPaint = Paint()
+      ..color = const Color(0xFFE0E0E0)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 0.5;
+    canvas.drawRect(Offset.zero & size, borderPaint);
+  }
+
+  @override
+  bool shouldRepaint(covariant _DiagonalColorPainter oldDelegate) =>
+      color1 != oldDelegate.color1 || color2 != oldDelegate.color2;
 }

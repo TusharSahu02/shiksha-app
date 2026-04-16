@@ -25,21 +25,23 @@ class _SplashScreenState extends State<SplashScreen>
       duration: const Duration(milliseconds: 1500),
     );
 
-    _fadeAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
-      CurvedAnimation(parent: _controller, curve: Curves.easeIn),
-    );
+    _fadeAnimation = Tween<double>(
+      begin: 0.0,
+      end: 1.0,
+    ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeIn));
 
-    _scaleAnimation = Tween<double>(begin: 0.8, end: 1.0).animate(
-      CurvedAnimation(parent: _controller, curve: Curves.easeOutBack),
-    );
+    _scaleAnimation = Tween<double>(
+      begin: 0.8,
+      end: 1.0,
+    ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeOutBack));
 
     _controller.forward();
 
     Future.delayed(const Duration(seconds: 3), () {
       if (mounted) {
-        Navigator.of(context).pushReplacement(
-          MaterialPageRoute(builder: (_) => widget.nextScreen),
-        );
+        Navigator.of(
+          context,
+        ).pushReplacement(MaterialPageRoute(builder: (_) => widget.nextScreen));
       }
     });
   }
@@ -69,21 +71,17 @@ class _SplashScreenState extends State<SplashScreen>
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Image.asset(
-                'assets/images/logo.png',
-                width: 200,
-                height: 200,
-              ),
-              const SizedBox(height: 24),
-              const Text(
-                'SHIKSHA',
-                style: TextStyle(
-                  fontSize: 32,
-                  fontWeight: FontWeight.bold,
-                  color: AppColors.primaryDark,
-                  letterSpacing: 4,
-                ),
-              ),
+              Image.asset('assets/images/logo.png', width: 200, height: 200),
+              // const SizedBox(height: 24),
+              // const Text(
+              //   'SHIKSHA',
+              //   style: TextStyle(
+              //     fontSize: 32,
+              //     fontWeight: FontWeight.bold,
+              //     color: AppColors.primaryDark,
+              //     letterSpacing: 4,
+              //   ),
+              // ),
             ],
           ),
         ),
