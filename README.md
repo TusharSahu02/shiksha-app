@@ -1,17 +1,65 @@
-# shiksha
+# Shiksha
 
-A new Flutter project.
+An AI-powered marketing campaign generator for the education sector. Create high-converting, emotionally resonant marketing campaigns in seconds.
+
+## Features
+
+- **Campaign Generator** — AI-powered form to generate marketing campaigns with customizable topic, target country, language/style, and phone number
+- **Marketing Studio** — Dashboard for managing and editing marketing content
+- **My Campaigns** — View and manage all your created campaigns
+- **Profile** — Account info, phone/WhatsApp verification, and settings
+
+## Screenshots
+
+The app includes:
+- Animated splash screen with Shiksha branding
+- Bottom navigation bar with 4 tabs
+- Campaign generation form with dropdowns and text inputs
+- Profile page with account info and phone verification
+
+## Tech Stack
+
+- **Framework:** Flutter
+- **Language:** Dart
+- **Design:** Material 3 with custom Shiksha brand theme
+
+## Brand Colors
+
+| Color             | Hex       |
+|-------------------|-----------|
+| Deep Royal Purple | `#4B2D8E` |
+| Navy Purple       | `#2D2154` |
+| Amber Orange      | `#F0A030` |
+| Gold              | `#D4A017` |
 
 ## Getting Started
 
-This project is a starting point for a Flutter application.
+### Prerequisites
 
-A few resources to get you started if this is your first Flutter project:
+- Flutter SDK (^3.11.4)
+- Android Studio / VS Code
+- Android emulator or physical device
 
-- [Learn Flutter](https://docs.flutter.dev/get-started/learn-flutter)
-- [Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Flutter learning resources](https://docs.flutter.dev/reference/learning-resources)
+### Run the app
 
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+```bash
+flutter pub get
+flutter run
+```
+
+## Project Structure
+
+```
+lib/
+  main.dart                          # App entry point
+  theme/
+    app_colors.dart                  # Brand color constants
+    app_theme.dart                   # Material theme configuration
+  screens/
+    splash_screen.dart               # Animated splash screen
+    home_screen.dart                 # Main screen with bottom nav bar
+    generator_screen.dart            # Campaign generator form
+    marketing_studio_screen.dart     # Marketing studio tab
+    my_campaigns_screen.dart         # Campaigns list tab
+    profile_screen.dart              # Profile & account settings
+```
