@@ -1,26 +1,28 @@
 import 'package:flutter/material.dart';
-import '../theme/app_colors.dart';
+import 'package:provider/provider.dart';
+import '../../theme/app_colors.dart';
+import '../core/widgets/app_form_field.dart';
+import 'profile_view_model.dart';
 
-class ProfileScreen extends StatefulWidget {
+class ProfileScreen extends StatelessWidget {
   const ProfileScreen({super.key});
 
   @override
-  State<ProfileScreen> createState() => _ProfileScreenState();
+  Widget build(BuildContext context) {
+    return ChangeNotifierProvider(
+      create: (_) => ProfileViewModel(),
+      child: const _ProfileView(),
+    );
+  }
 }
 
-class _ProfileScreenState extends State<ProfileScreen> {
-  final _phoneController = TextEditingController(text: '+91 98765 43210');
-  final _verifyPhoneController = TextEditingController(text: '+91 98765 43210');
-
-  @override
-  void dispose() {
-    _phoneController.dispose();
-    _verifyPhoneController.dispose();
-    super.dispose();
-  }
+class _ProfileView extends StatelessWidget {
+  const _ProfileView();
 
   @override
   Widget build(BuildContext context) {
+    final vm = context.watch<ProfileViewModel>();
+
     return Scaffold(
       backgroundColor: const Color(0xFFFFF8F2),
       appBar: AppBar(
@@ -35,10 +37,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
         child: Column(
           children: [
             // Profile Card
-            _buildCard(
+            AppCard(
               child: Row(
                 children: [
-                  // Avatar
                   Container(
                     width: 56,
                     height: 56,
@@ -46,10 +47,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       color: AppColors.secondary,
                       borderRadius: BorderRadius.circular(14),
                     ),
-                    child: const Center(
+                    child: Center(
                       child: Text(
-                        'T',
-                        style: TextStyle(
+                        vm.profile.name.isNotEmpty
+                            ? vm.profile.name[0].toUpperCase()
+                            : '?',
+                        style: const TextStyle(
                           fontSize: 24,
                           fontWeight: FontWeight.bold,
                           color: Colors.white,
@@ -63,7 +66,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          'Tushar Sahu',
+                          vm.profile.name,
                           style: TextStyle(
                             fontSize: 17,
                             fontWeight: FontWeight.w700,
@@ -72,7 +75,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         ),
                         const SizedBox(height: 2),
                         Text(
-                          'demomail.tushar@gmail.com',
+                          vm.profile.email,
                           style: TextStyle(
                             fontSize: 13,
                             color: AppColors.textSecondary,
@@ -81,14 +84,16 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         const SizedBox(height: 6),
                         Container(
                           padding: const EdgeInsets.symmetric(
-                              horizontal: 10, vertical: 3),
+                            horizontal: 10,
+                            vertical: 3,
+                          ),
                           decoration: BoxDecoration(
                             color: const Color(0xFFE8F5E9),
                             borderRadius: BorderRadius.circular(6),
                           ),
-                          child: const Text(
-                            'User',
-                            style: TextStyle(
+                          child: Text(
+                            vm.profile.role,
+                            style: const TextStyle(
                               fontSize: 11,
                               fontWeight: FontWeight.w600,
                               color: Color(0xFF2E7D32),
@@ -104,14 +109,17 @@ class _ProfileScreenState extends State<ProfileScreen> {
             const SizedBox(height: 16),
 
             // Account Info Card
-            _buildCard(
+            AppCard(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Header
                   Row(
                     children: [
-                      Icon(Icons.person_outline, size: 22, color: AppColors.secondary),
+                      Icon(
+                        Icons.person_outline,
+                        size: 22,
+                        color: AppColors.secondary,
+                      ),
                       const SizedBox(width: 8),
                       Text(
                         'Account Info',
@@ -133,26 +141,23 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   ),
                   const SizedBox(height: 24),
 
-                  // Email Address
-                  _buildFieldLabel(Icons.email_outlined, 'EMAIL ADDRESS'),
+                  const AppFormLabel('EMAIL ADDRESS', icon: Icons.email_outlined),
                   const SizedBox(height: 8),
-                  TextField(
+                  AppTextField(
+                    hint: vm.profile.email,
                     enabled: false,
-                    decoration: _inputDecoration('demomail.tushar@gmail.com'),
-                    style: TextStyle(
-                      fontSize: 14,
-                      color: AppColors.textSecondary,
-                    ),
                   ),
                   const SizedBox(height: 24),
 
-                  // Phone / WhatsApp Number
-                  _buildFieldLabel(Icons.phone_outlined, 'PHONE / WHATSAPP NUMBER'),
+                  const AppFormLabel(
+                    'PHONE / WHATSAPP NUMBER',
+                    icon: Icons.phone_outlined,
+                  ),
                   const SizedBox(height: 8),
-                  TextField(
-                    controller: _phoneController,
+                  AppTextField(
+                    controller: vm.phoneController,
+                    hint: '+91 98765 43210',
                     keyboardType: TextInputType.phone,
-                    decoration: _inputDecoration('+91 98765 43210'),
                   ),
                   const SizedBox(height: 6),
                   Text(
@@ -164,12 +169,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   ),
                   const SizedBox(height: 24),
 
-                  // Save Changes button
                   SizedBox(
                     width: double.infinity,
                     height: 48,
                     child: ElevatedButton.icon(
-                      onPressed: () {},
+                      onPressed: vm.saveChanges,
                       icon: const Icon(Icons.save_outlined, size: 18),
                       label: const Text(
                         'Save Changes',
@@ -194,17 +198,20 @@ class _ProfileScreenState extends State<ProfileScreen> {
             const SizedBox(height: 16),
 
             // Verify Phone Card
-            _buildCard(
+            AppCard(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Header
                   Row(
                     children: [
-                      Icon(Icons.phone_outlined, size: 22, color: AppColors.secondary),
+                      Icon(
+                        Icons.phone_outlined,
+                        size: 22,
+                        color: AppColors.secondary,
+                      ),
                       const SizedBox(width: 8),
                       Text(
-                        'Verify Phone / WhatsApp Number',
+                        'Verify',
                         style: TextStyle(
                           fontSize: 17,
                           fontWeight: FontWeight.w700,
@@ -223,22 +230,20 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   ),
                   const SizedBox(height: 24),
 
-                  // Phone / WhatsApp
-                  _buildFieldLabel(null, 'PHONE / WHATSAPP'),
+                  const AppFormLabel('PHONE / WHATSAPP'),
                   const SizedBox(height: 8),
-                  TextField(
-                    controller: _verifyPhoneController,
+                  AppTextField(
+                    controller: vm.verifyPhoneController,
+                    hint: '+91 98765 43210',
                     keyboardType: TextInputType.phone,
-                    decoration: _inputDecoration('+91 98765 43210'),
                   ),
                   const SizedBox(height: 24),
 
-                  // Send OTP button
                   SizedBox(
                     width: double.infinity,
                     height: 48,
                     child: ElevatedButton.icon(
-                      onPressed: () {},
+                      onPressed: vm.sendOtp,
                       icon: const Icon(Icons.phone_outlined, size: 18),
                       label: const Text(
                         'Send OTP via Email',
@@ -248,7 +253,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         ),
                       ),
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: AppColors.secondary.withValues(alpha: 0.6),
+                        backgroundColor: AppColors.secondary.withValues(
+                          alpha: 0.6,
+                        ),
                         foregroundColor: Colors.white,
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(10),
@@ -273,66 +280,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
             const SizedBox(height: 24),
           ],
         ),
-      ),
-    );
-  }
-
-  Widget _buildCard({required Widget child}) {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: const Color(0xFFE8E8E8)),
-      ),
-      child: child,
-    );
-  }
-
-  Widget _buildFieldLabel(IconData? icon, String text) {
-    return Row(
-      children: [
-        if (icon != null) ...[
-          Icon(icon, size: 16, color: AppColors.primaryDark),
-          const SizedBox(width: 6),
-        ],
-        Text(
-          text,
-          style: TextStyle(
-            fontSize: 12,
-            fontWeight: FontWeight.w700,
-            color: AppColors.primaryDark,
-            letterSpacing: 0.8,
-          ),
-        ),
-      ],
-    );
-  }
-
-  InputDecoration _inputDecoration(String hint) {
-    return InputDecoration(
-      hintText: hint,
-      hintStyle: TextStyle(
-        color: AppColors.textSecondary.withValues(alpha: 0.6),
-        fontSize: 14,
-      ),
-      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-      border: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(10),
-        borderSide: const BorderSide(color: Color(0xFFE0E0E0)),
-      ),
-      enabledBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(10),
-        borderSide: const BorderSide(color: Color(0xFFE0E0E0)),
-      ),
-      disabledBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(10),
-        borderSide: const BorderSide(color: Color(0xFFE0E0E0)),
-      ),
-      focusedBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(10),
-        borderSide: BorderSide(color: AppColors.secondary),
       ),
     );
   }
