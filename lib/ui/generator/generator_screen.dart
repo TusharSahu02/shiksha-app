@@ -141,10 +141,10 @@ class _GeneratorView extends StatelessWidget {
                     // Phone / WhatsApp Number
                     const AppFormLabel('PHONE / WHATSAPP NUMBER'),
                     const SizedBox(height: 8),
-                    AppTextField(
+                    AppPhoneField(
+                      key: ValueKey(vm.dialCode),
                       controller: vm.phoneController,
-                      hint: '+91 98765 43210',
-                      keyboardType: TextInputType.phone,
+                      dialCode: vm.dialCode,
                     ),
                     const SizedBox(height: 20),
 

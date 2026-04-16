@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../data/constants/countries.dart';
+import '../../data/constants/country_dial_codes.dart';
 import '../../data/constants/country_languages.dart';
 import '../../data/models/campaign_config.dart';
 
@@ -14,6 +15,9 @@ class GeneratorViewModel extends ChangeNotifier {
 
   List<String> get languages =>
       kCountryLanguages[_config.country] ?? const ['English'];
+
+  String get dialCode =>
+      kCountryDialCodes[_config.country] ?? '+1';
 
   void updateCountry(String country) {
     final langs = kCountryLanguages[country] ?? const ['English'];
