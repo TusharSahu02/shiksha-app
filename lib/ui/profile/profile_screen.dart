@@ -54,8 +54,8 @@ class _ProfileView extends StatelessWidget {
             const SizedBox(height: 16),
 
             // ── Verify Phone ──
-            _VerifyPhoneCard(vm: vm),
-            const SizedBox(height: 16),
+            // _VerifyPhoneCard(vm: vm),
+            // const SizedBox(height: 16),
 
             // ── Brand Kit / Institution ──
             _BrandKitCard(vm: vm),
@@ -331,9 +331,7 @@ class _SubscriptionCard extends StatelessWidget {
 
           // Upgrade banner for free / Manage Plan for paid
           if (isFree)
-            _UpgradeBanner(
-              onTap: () => _showPlanComparison(context, vm),
-            )
+            _UpgradeBanner(onTap: () => _showPlanComparison(context, vm))
           else
             SizedBox(
               width: double.infinity,
@@ -360,8 +358,18 @@ class _SubscriptionCard extends StatelessWidget {
 
   String _formatDate(DateTime date) {
     const months = [
-      'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-      'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
+      'Jan',
+      'Feb',
+      'Mar',
+      'Apr',
+      'May',
+      'Jun',
+      'Jul',
+      'Aug',
+      'Sep',
+      'Oct',
+      'Nov',
+      'Dec',
     ];
     return '${date.day} ${months[date.month - 1]} ${date.year}';
   }
@@ -447,9 +455,7 @@ class _UpgradeBanner extends StatelessWidget {
             ],
           ),
           borderRadius: BorderRadius.circular(12),
-          border: Border.all(
-            color: AppColors.secondary.withValues(alpha: 0.3),
-          ),
+          border: Border.all(color: AppColors.secondary.withValues(alpha: 0.3)),
         ),
         child: Row(
           children: [
@@ -477,11 +483,7 @@ class _UpgradeBanner extends StatelessWidget {
                 ],
               ),
             ),
-            Icon(
-              Icons.arrow_forward_ios,
-              size: 14,
-              color: AppColors.secondary,
-            ),
+            Icon(Icons.arrow_forward_ios, size: 14, color: AppColors.secondary),
           ],
         ),
       ),
@@ -823,10 +825,7 @@ class _PreferencesCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _SectionHeader(
-            icon: Icons.tune,
-            title: 'Default Preferences',
-          ),
+          _SectionHeader(icon: Icons.tune, title: 'Default Preferences'),
           const SizedBox(height: 6),
           Text(
             'Pre-fill your Generator & Studio forms with these defaults.',
@@ -909,7 +908,10 @@ class _NotificationsCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _SectionHeader(icon: Icons.notifications_outlined, title: 'Notifications'),
+          _SectionHeader(
+            icon: Icons.notifications_outlined,
+            title: 'Notifications',
+          ),
           const SizedBox(height: 16),
           _NotifToggle(
             label: 'Campaign generation complete',
@@ -957,10 +959,7 @@ class _NotifToggle extends StatelessWidget {
           Expanded(
             child: Text(
               label,
-              style: TextStyle(
-                fontSize: 13,
-                color: AppColors.primaryDark,
-              ),
+              style: TextStyle(fontSize: 13, color: AppColors.primaryDark),
             ),
           ),
           Switch(
@@ -1068,7 +1067,11 @@ class _DangerZoneCard extends StatelessWidget {
         children: [
           Row(
             children: [
-              const Icon(Icons.warning_amber, size: 22, color: Color(0xFFD32F2F)),
+              const Icon(
+                Icons.warning_amber,
+                size: 22,
+                color: Color(0xFFD32F2F),
+              ),
               const SizedBox(width: 8),
               Text(
                 'Account',
@@ -1224,8 +1227,8 @@ class _PlanTile extends StatelessWidget {
     final borderColor = isCurrent
         ? AppColors.secondary
         : isGolden
-            ? const Color(0xFFD4A017)
-            : const Color(0xFFE0E0E0);
+        ? const Color(0xFFD4A017)
+        : const Color(0xFFE0E0E0);
 
     return Container(
       padding: const EdgeInsets.all(16),
