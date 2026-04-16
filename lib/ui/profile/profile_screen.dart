@@ -655,70 +655,7 @@ class _AccountInfoCard extends StatelessWidget {
 }
 
 // ─────────────────────────────────────────────
-// 5. Verify Phone
-// ─────────────────────────────────────────────
-class _VerifyPhoneCard extends StatelessWidget {
-  final ProfileViewModel vm;
-  const _VerifyPhoneCard({required this.vm});
-
-  @override
-  Widget build(BuildContext context) {
-    return AppCard(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          _SectionHeader(icon: Icons.phone_outlined, title: 'Verify'),
-          const SizedBox(height: 6),
-          Text(
-            'Verify your number to pre-fill campaign CTAs & receive campaign updates.',
-            style: TextStyle(fontSize: 13, color: AppColors.textSecondary),
-          ),
-          const SizedBox(height: 24),
-
-          const AppFormLabel('PHONE / WHATSAPP'),
-          const SizedBox(height: 8),
-          AppTextField(
-            controller: vm.verifyPhoneController,
-            hint: '+91 98765 43210',
-            keyboardType: TextInputType.phone,
-          ),
-          const SizedBox(height: 24),
-
-          SizedBox(
-            width: double.infinity,
-            height: 48,
-            child: ElevatedButton.icon(
-              onPressed: vm.sendOtp,
-              icon: const Icon(Icons.phone_outlined, size: 18),
-              label: const Text(
-                'Send OTP via Email',
-                style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600),
-              ),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.secondary.withValues(alpha: 0.6),
-                foregroundColor: Colors.white,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                elevation: 0,
-              ),
-            ),
-          ),
-          const SizedBox(height: 10),
-          Center(
-            child: Text(
-              'OTP will be sent to your registered email',
-              style: TextStyle(fontSize: 12, color: AppColors.textSecondary),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-// ─────────────────────────────────────────────
-// 6. Brand Kit / Institution
+// 5. Brand Kit / Institution
 // ─────────────────────────────────────────────
 class _BrandKitCard extends StatelessWidget {
   final ProfileViewModel vm;
