@@ -107,16 +107,14 @@ class _ProfileCard extends StatelessWidget {
               color: AppColors.secondary,
               borderRadius: BorderRadius.circular(14),
             ),
-            child: Center(
-              child: Text(
-                profile.name.isNotEmpty ? profile.name[0].toUpperCase() : '?',
-                style: const TextStyle(
-                  fontSize: 24,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.white,
-                ),
-              ),
-            ),
+            clipBehavior: Clip.antiAlias,
+            child: profile.photoUrl.isNotEmpty
+                ? Image.network(
+                    profile.photoUrl,
+                    fit: BoxFit.cover,
+                    errorBuilder: (_, e, s) => _buildInitial(profile.name),
+                  )
+                : _buildInitial(profile.name),
           ),
           const SizedBox(width: 16),
           Expanded(
@@ -170,6 +168,19 @@ class _ProfileCard extends StatelessWidget {
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildInitial(String name) {
+    return Center(
+      child: Text(
+        name.isNotEmpty ? name[0].toUpperCase() : '?',
+        style: const TextStyle(
+          fontSize: 24,
+          fontWeight: FontWeight.bold,
+          color: Colors.white,
+        ),
       ),
     );
   }
@@ -616,7 +627,7 @@ class _AccountInfoCard extends StatelessWidget {
           _SectionHeader(icon: Icons.person_outline, title: 'Account Info'),
           const SizedBox(height: 6),
           Text(
-            'Your email is set by the platform and cannot be changed here.',
+            'Your email is linked to your Google account and cannot be changed here.',
             style: TextStyle(fontSize: 13, color: AppColors.textSecondary),
           ),
           const SizedBox(height: 24),

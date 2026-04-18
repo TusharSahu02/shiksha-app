@@ -44,31 +44,56 @@ class _GeneratorViewState extends State<_GeneratorView>
     );
 
     _badgeFade = Tween(begin: 0.0, end: 1.0).animate(
-      CurvedAnimation(parent: _controller, curve: const Interval(0.0, 0.4, curve: Curves.easeOut)),
+      CurvedAnimation(
+        parent: _controller,
+        curve: const Interval(0.0, 0.4, curve: Curves.easeOut),
+      ),
     );
     _badgeSlide = Tween(begin: const Offset(0, -0.3), end: Offset.zero).animate(
-      CurvedAnimation(parent: _controller, curve: const Interval(0.0, 0.4, curve: Curves.easeOut)),
+      CurvedAnimation(
+        parent: _controller,
+        curve: const Interval(0.0, 0.4, curve: Curves.easeOut),
+      ),
     );
 
     _titleFade = Tween(begin: 0.0, end: 1.0).animate(
-      CurvedAnimation(parent: _controller, curve: const Interval(0.15, 0.55, curve: Curves.easeOut)),
+      CurvedAnimation(
+        parent: _controller,
+        curve: const Interval(0.15, 0.55, curve: Curves.easeOut),
+      ),
     );
     _titleSlide = Tween(begin: const Offset(0, 0.3), end: Offset.zero).animate(
-      CurvedAnimation(parent: _controller, curve: const Interval(0.15, 0.55, curve: Curves.easeOut)),
+      CurvedAnimation(
+        parent: _controller,
+        curve: const Interval(0.15, 0.55, curve: Curves.easeOut),
+      ),
     );
 
     _subtitleFade = Tween(begin: 0.0, end: 1.0).animate(
-      CurvedAnimation(parent: _controller, curve: const Interval(0.3, 0.7, curve: Curves.easeOut)),
+      CurvedAnimation(
+        parent: _controller,
+        curve: const Interval(0.3, 0.7, curve: Curves.easeOut),
+      ),
     );
-    _subtitleSlide = Tween(begin: const Offset(0, 0.3), end: Offset.zero).animate(
-      CurvedAnimation(parent: _controller, curve: const Interval(0.3, 0.7, curve: Curves.easeOut)),
-    );
+    _subtitleSlide = Tween(begin: const Offset(0, 0.3), end: Offset.zero)
+        .animate(
+          CurvedAnimation(
+            parent: _controller,
+            curve: const Interval(0.3, 0.7, curve: Curves.easeOut),
+          ),
+        );
 
     _cardFade = Tween(begin: 0.0, end: 1.0).animate(
-      CurvedAnimation(parent: _controller, curve: const Interval(0.45, 1.0, curve: Curves.easeOut)),
+      CurvedAnimation(
+        parent: _controller,
+        curve: const Interval(0.45, 1.0, curve: Curves.easeOut),
+      ),
     );
     _cardSlide = Tween(begin: const Offset(0, 0.15), end: Offset.zero).animate(
-      CurvedAnimation(parent: _controller, curve: const Interval(0.45, 1.0, curve: Curves.easeOut)),
+      CurvedAnimation(
+        parent: _controller,
+        curve: const Interval(0.45, 1.0, curve: Curves.easeOut),
+      ),
     );
 
     _controller.forward();
@@ -156,7 +181,7 @@ class _GeneratorViewState extends State<_GeneratorView>
                               ),
                             ),
                             TextSpan(
-                              text: 'Suite',
+                              text: 'Studio',
                               style: TextStyle(
                                 fontSize: 36,
                                 fontWeight: FontWeight.w900,
@@ -204,7 +229,8 @@ class _GeneratorViewState extends State<_GeneratorView>
                             const SizedBox(height: 8),
                             AppTextField(
                               controller: vm.topicController,
-                              hint: 'e.g. MBBS in Russia, Study Abroad Scholarship, Coding Bootcamp...',
+                              hint:
+                                  'e.g. MBBS in Russia, Study Abroad Scholarship, Coding Bootcamp...',
                             ),
                             const SizedBox(height: 16),
 

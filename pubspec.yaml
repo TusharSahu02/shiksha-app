@@ -37,6 +37,7 @@ dependencies:
   provider: ^6.1.2
   supabase_flutter: ^2.12.4
   google_sign_in: ^7.2.0
+  flutter_svg: ^2.2.4
 
 dev_dependencies:
   flutter_test:
@@ -70,6 +71,7 @@ flutter:
 
   assets:
     - assets/images/logo.png
+    - assets/images/google-svg.svg
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/to/resolution-aware-images

@@ -6,8 +6,8 @@ import '../auth/auth_screen.dart';
 
 class ProfileViewModel extends ChangeNotifier {
   // Account
-  final phoneController = TextEditingController(text: '+91 98765 43210');
-  final verifyPhoneController = TextEditingController(text: '+91 98765 43210');
+  final phoneController = TextEditingController();
+  final verifyPhoneController = TextEditingController();
 
   // Brand Kit
   final institutionController = TextEditingController();
@@ -18,17 +18,26 @@ class ProfileViewModel extends ChangeNotifier {
   final keyOfferingsController = TextEditingController();
   final uspController = TextEditingController();
 
-  UserProfile _profile = UserProfile(
-    tier: SubscriptionTier.silver,
-    renewalDate: DateTime(2025, 7, 15),
-    usedImages: 64,
-    usedVideos: 18,
-    totalCampaigns: 24,
-    totalImages: 47,
-    totalVideos: 8,
-    totalPrintMaterials: 12,
-  );
+  late UserProfile _profile;
   UserProfile get profile => _profile;
+
+  ProfileViewModel() {
+    final user = AuthService.currentUser;
+    final meta = user?.userMetadata;
+    _profile = UserProfile(
+      name: meta?['full_name'] as String? ??
+          meta?['name'] as String? ??
+          user?.email?.split('@').first ??
+          '',
+      email: user?.email ?? '',
+      photoUrl: meta?['avatar_url'] as String? ??
+          meta?['picture'] as String? ??
+          '',
+      phone: user?.phone ?? '',
+      tier: SubscriptionTier.free,
+    );
+    phoneController.text = _profile.phone;
+  }
 
   void saveAccountChanges() {
     _profile = _profile.copyWith(phone: phoneController.text);
@@ -101,6 +110,53 @@ class ProfileViewModel extends ChangeNotifier {
   }
 
   Future<void> signOut(BuildContext context) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: const Text('Sign Out'),
+        content: const Text('Are you sure you want to sign out?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            style: TextButton.styleFrom(foregroundColor: const Color(0xFFD32F2F)),
+            child: const Text('Sign Out'),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true || !context.mounted) return;
+
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (_) => const PopScope(
+        canPop: false,
+        child: Center(
+          child: Card(
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.all(Radius.circular(16)),
+            ),
+            child: Padding(
+              padding: EdgeInsets.all(32),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  CircularProgressIndicator(),
+                  SizedBox(height: 16),
+                  Text('Signing out...', style: TextStyle(fontSize: 15)),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+
     await AuthService.signOut();
     if (!context.mounted) return;
     Navigator.of(context).pushAndRemoveUntil(

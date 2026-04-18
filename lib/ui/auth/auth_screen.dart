@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 
 import '../../services/auth_service.dart';
 import '../../theme/app_colors.dart';
@@ -165,77 +166,10 @@ class _AuthScreenState extends State<AuthScreen> with SingleTickerProviderStateM
   }
 
   Widget _buildGoogleLogo() {
-    return SizedBox(
-      width: 20,
-      height: 20,
-      child: CustomPaint(painter: _GoogleLogoPainter()),
+    return SvgPicture.asset(
+      'assets/images/google-svg.svg',
+      width: 22,
+      height: 22,
     );
   }
-}
-
-class _GoogleLogoPainter extends CustomPainter {
-  @override
-  void paint(Canvas canvas, Size size) {
-    final double w = size.width;
-    final double h = size.height;
-    final double cx = w / 2;
-    final double cy = h / 2;
-    final double r = w / 2;
-
-    // Blue arc (top-right)
-    final bluePaint = Paint()
-      ..color = const Color(0xFF4285F4)
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = w * 0.2
-      ..strokeCap = StrokeCap.butt;
-    canvas.drawArc(
-      Rect.fromCircle(center: Offset(cx, cy), radius: r * 0.7),
-      -0.9, 1.8, false, bluePaint,
-    );
-
-    // Green arc (bottom-right)
-    final greenPaint = Paint()
-      ..color = const Color(0xFF34A853)
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = w * 0.2
-      ..strokeCap = StrokeCap.butt;
-    canvas.drawArc(
-      Rect.fromCircle(center: Offset(cx, cy), radius: r * 0.7),
-      0.9, 1.2, false, greenPaint,
-    );
-
-    // Yellow arc (bottom-left)
-    final yellowPaint = Paint()
-      ..color = const Color(0xFFFBBC05)
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = w * 0.2
-      ..strokeCap = StrokeCap.butt;
-    canvas.drawArc(
-      Rect.fromCircle(center: Offset(cx, cy), radius: r * 0.7),
-      2.1, 1.2, false, yellowPaint,
-    );
-
-    // Red arc (top-left)
-    final redPaint = Paint()
-      ..color = const Color(0xFFEA4335)
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = w * 0.2
-      ..strokeCap = StrokeCap.butt;
-    canvas.drawArc(
-      Rect.fromCircle(center: Offset(cx, cy), radius: r * 0.7),
-      3.3, 1.0, false, redPaint,
-    );
-
-    // Horizontal bar (the Google "G" cut-in)
-    final barPaint = Paint()
-      ..color = const Color(0xFF4285F4)
-      ..style = PaintingStyle.fill;
-    canvas.drawRect(
-      Rect.fromLTWH(cx, cy - w * 0.09, r * 0.75, w * 0.18),
-      barPaint,
-    );
-  }
-
-  @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }

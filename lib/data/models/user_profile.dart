@@ -5,6 +5,7 @@ class UserProfile {
   final String email;
   final String phone;
   final String role;
+  final String photoUrl;
 
   // Subscription
   final SubscriptionTier tier;
@@ -41,10 +42,11 @@ class UserProfile {
   final bool notifyRenewal;
 
   const UserProfile({
-    this.name = 'Tushar Sahu',
-    this.email = 'demomail.tushar@gmail.com',
-    this.phone = '+91 98765 43210',
+    this.name = '',
+    this.email = '',
+    this.phone = '',
     this.role = 'User',
+    this.photoUrl = '',
     this.tier = SubscriptionTier.free,
     this.renewalDate,
     this.usedImages = 0,
@@ -76,6 +78,7 @@ class UserProfile {
     String? email,
     String? phone,
     String? role,
+    String? photoUrl,
     SubscriptionTier? tier,
     DateTime? renewalDate,
     int? usedImages,
@@ -106,6 +109,7 @@ class UserProfile {
       email: email ?? this.email,
       phone: phone ?? this.phone,
       role: role ?? this.role,
+      photoUrl: photoUrl ?? this.photoUrl,
       tier: tier ?? this.tier,
       renewalDate: renewalDate ?? this.renewalDate,
       usedImages: usedImages ?? this.usedImages,
