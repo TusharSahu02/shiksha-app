@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import '../../../theme/app_colors.dart';
 
 class AppFormLabel extends StatelessWidget {
@@ -42,7 +43,9 @@ class AppTextField extends StatelessWidget {
   final TextEditingController? controller;
   final String hint;
   final int maxLines;
+  final int? minLines;
   final TextInputType keyboardType;
+  final TextInputAction? textInputAction;
   final bool enabled;
 
   const AppTextField({
@@ -50,16 +53,21 @@ class AppTextField extends StatelessWidget {
     this.controller,
     required this.hint,
     this.maxLines = 1,
+    this.minLines,
     this.keyboardType = TextInputType.text,
+    this.textInputAction,
     this.enabled = true,
   });
 
   @override
   Widget build(BuildContext context) {
+    final isMultiline = maxLines != 1;
     return TextField(
       controller: controller,
-      maxLines: maxLines,
-      keyboardType: keyboardType,
+      maxLines: isMultiline ? null : 1,
+      minLines: isMultiline ? (minLines ?? maxLines) : 1,
+      keyboardType: isMultiline ? TextInputType.multiline : keyboardType,
+      textInputAction: isMultiline ? null : (textInputAction ?? TextInputAction.done),
       enabled: enabled,
       style: TextStyle(
         fontSize: 13,
@@ -191,6 +199,8 @@ class AppPhoneField extends StatelessWidget {
             child: TextField(
               controller: controller,
               keyboardType: TextInputType.phone,
+              maxLength: 10,
+              inputFormatters: [FilteringTextInputFormatter.digitsOnly],
               style: TextStyle(fontSize: 13, color: AppColors.primaryDark),
               decoration: InputDecoration(
                 hintText: hint,
@@ -198,6 +208,7 @@ class AppPhoneField extends StatelessWidget {
                   color: AppColors.textSecondary.withValues(alpha: 0.5),
                   fontSize: 13,
                 ),
+                counterText: '',
                 contentPadding: const EdgeInsets.symmetric(
                   horizontal: 14,
                   vertical: 12,

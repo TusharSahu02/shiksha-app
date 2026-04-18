@@ -66,12 +66,12 @@ class _ProfileView extends StatelessWidget {
             const SizedBox(height: 16),
 
             // ── Notifications ──
-            _NotificationsCard(vm: vm),
-            const SizedBox(height: 16),
+            // _NotificationsCard(vm: vm),
+            // const SizedBox(height: 16),
 
             // ── Security ──
-            _SecurityCard(vm: vm),
-            const SizedBox(height: 16),
+            // _SecurityCard(vm: vm),
+            // const SizedBox(height: 16),
 
             // ── Help & Support ──
             _HelpCard(),
@@ -642,10 +642,10 @@ class _AccountInfoCard extends StatelessWidget {
             icon: Icons.phone_outlined,
           ),
           const SizedBox(height: 8),
-          AppTextField(
+          AppPhoneField(
+            key: ValueKey(vm.dialCode),
             controller: vm.phoneController,
-            hint: '+91 98765 43210',
-            keyboardType: TextInputType.phone,
+            dialCode: vm.dialCode,
           ),
           const SizedBox(height: 6),
           Text(
@@ -654,10 +654,61 @@ class _AccountInfoCard extends StatelessWidget {
           ),
           const SizedBox(height: 24),
 
-          _PrimaryButton(
-            label: 'Save Changes',
-            icon: Icons.save_outlined,
-            onPressed: vm.saveAccountChanges,
+          SizedBox(
+            width: double.infinity,
+            height: 48,
+            child: ElevatedButton.icon(
+              onPressed: vm.isSaving
+                  ? null
+                  : () async {
+                      await vm.saveAccountChanges();
+                      if (!context.mounted) return;
+                      final msg = vm.saveMessage;
+                      if (msg != null) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text(msg),
+                            behavior: SnackBarBehavior.floating,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                            backgroundColor: msg.startsWith('Failed')
+                                ? const Color(0xFFB00020)
+                                : const Color(0xFF2E7D32),
+                          ),
+                        );
+                      }
+                    },
+              icon: vm.isSaving
+                  ? const SizedBox(
+                      width: 18,
+                      height: 18,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        color: Colors.white,
+                      ),
+                    )
+                  : const Icon(Icons.save_outlined, size: 18),
+              label: Text(
+                vm.isSaving ? 'Saving...' : 'Save Changes',
+                style: const TextStyle(
+                  fontSize: 15,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.secondary,
+                foregroundColor: Colors.white,
+                disabledBackgroundColor: AppColors.secondary.withValues(
+                  alpha: 0.7,
+                ),
+                disabledForegroundColor: Colors.white70,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                elevation: 0,
+              ),
+            ),
           ),
         ],
       ),
@@ -749,10 +800,92 @@ class _BrandKitCard extends StatelessWidget {
           ),
           const SizedBox(height: 24),
 
-          _PrimaryButton(
-            label: 'Save Brand Kit',
-            icon: Icons.save_outlined,
-            onPressed: vm.saveBrandKit,
+          Row(
+            children: [
+              Expanded(
+                child: SizedBox(
+                  height: 48,
+                  child: OutlinedButton.icon(
+                    onPressed: vm.isSavingBrandKit
+                        ? null
+                        : () => vm.resetBrandKit(),
+                    icon: const Icon(Icons.refresh, size: 18),
+                    label: const Text(
+                      'Reset',
+                      style: TextStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: AppColors.textSecondary,
+                      side: const BorderSide(color: Color(0xFFE0E0E0)),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: SizedBox(
+                  height: 48,
+                  child: ElevatedButton.icon(
+                    onPressed: vm.isSavingBrandKit
+                        ? null
+                        : () async {
+                            await vm.saveBrandKit();
+                            if (!context.mounted) return;
+                            final msg = vm.brandKitMessage;
+                            if (msg != null) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: Text(msg),
+                                  behavior: SnackBarBehavior.floating,
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(10),
+                                  ),
+                                  backgroundColor: msg.startsWith('Failed')
+                                      ? const Color(0xFFB00020)
+                                      : const Color(0xFF2E7D32),
+                                ),
+                              );
+                            }
+                          },
+                    icon: vm.isSavingBrandKit
+                        ? const SizedBox(
+                            width: 18,
+                            height: 18,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              color: Colors.white,
+                            ),
+                          )
+                        : const Icon(Icons.save_outlined, size: 18),
+                    label: Text(
+                      vm.isSavingBrandKit ? 'Saving...' : 'Save',
+                      style: const TextStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppColors.secondary,
+                      foregroundColor: Colors.white,
+                      disabledBackgroundColor: AppColors.secondary.withValues(
+                        alpha: 0.7,
+                      ),
+                      disabledForegroundColor: Colors.white70,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      elevation: 0,
+                    ),
+                  ),
+                ),
+              ),
+            ],
           ),
         ],
       ),

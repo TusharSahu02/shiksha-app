@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
+import '../../data/constants/country_dial_codes.dart';
 import '../../data/models/user_profile.dart';
 import '../../data/models/subscription_tier.dart';
 import '../../services/auth_service.dart';
@@ -21,40 +23,200 @@ class ProfileViewModel extends ChangeNotifier {
   late UserProfile _profile;
   UserProfile get profile => _profile;
 
+  late String dialCode;
+
+  String _detectDialCodeFromLocale() {
+    final countryCode =
+        WidgetsBinding.instance.platformDispatcher.locale.countryCode
+            ?.toUpperCase() ??
+        '';
+    const isoToCountry = {
+      'IN': 'India',
+      'US': 'United States',
+      'GB': 'United Kingdom',
+      'AU': 'Australia',
+      'CA': 'Canada',
+      'AE': 'United Arab Emirates',
+      'PK': 'Pakistan',
+      'BD': 'Bangladesh',
+      'NP': 'Nepal',
+      'LK': 'Sri Lanka',
+      'DE': 'Germany',
+      'FR': 'France',
+      'SG': 'Singapore',
+      'MY': 'Malaysia',
+      'NG': 'Nigeria',
+      'ZA': 'South Africa',
+      'KE': 'Kenya',
+      'PH': 'Philippines',
+      'ID': 'Indonesia',
+      'BR': 'Brazil',
+      'MX': 'Mexico',
+      'RU': 'Russia',
+      'CN': 'China',
+      'JP': 'Japan',
+      'KR': 'South Korea',
+      'SA': 'Saudi Arabia',
+      'QA': 'Qatar',
+      'KW': 'Kuwait',
+      'BH': 'Bahrain',
+      'OM': 'Oman',
+      'EG': 'Egypt',
+      'TR': 'Turkey',
+      'IT': 'Italy',
+      'ES': 'Spain',
+      'NL': 'Netherlands',
+      'UA': 'Ukraine',
+      'KZ': 'Kazakhstan',
+      'UZ': 'Uzbekistan',
+    };
+    final countryName = isoToCountry[countryCode];
+    return kCountryDialCodes[countryName] ?? '+91';
+  }
+
+  bool _isSaving = false;
+  bool get isSaving => _isSaving;
+
+  bool _isSavingBrandKit = false;
+  bool get isSavingBrandKit => _isSavingBrandKit;
+
+  String? _saveMessage;
+  String? get saveMessage => _saveMessage;
+
+  String? _brandKitMessage;
+  String? get brandKitMessage => _brandKitMessage;
+
   ProfileViewModel() {
+    dialCode = _detectDialCodeFromLocale();
     final user = AuthService.currentUser;
     final meta = user?.userMetadata;
     _profile = UserProfile(
-      name: meta?['full_name'] as String? ??
+      name:
+          meta?['full_name'] as String? ??
           meta?['name'] as String? ??
           user?.email?.split('@').first ??
           '',
       email: user?.email ?? '',
-      photoUrl: meta?['avatar_url'] as String? ??
-          meta?['picture'] as String? ??
-          '',
-      phone: user?.phone ?? '',
+      photoUrl:
+          meta?['avatar_url'] as String? ?? meta?['picture'] as String? ?? '',
+      phone: meta?['phone'] as String? ?? '',
       tier: SubscriptionTier.free,
     );
     phoneController.text = _profile.phone;
+    _loadFromDatabase();
   }
 
-  void saveAccountChanges() {
-    _profile = _profile.copyWith(phone: phoneController.text);
+  Future<void> _loadFromDatabase() async {
+    try {
+      final data = await Supabase.instance.client
+          .from('profiles')
+          .select('phone, dial_code, institution_name, tagline, institution_email, website, address, key_offerings, usp')
+          .eq('id', AuthService.currentUser!.id)
+          .maybeSingle();
+      if (data != null) {
+        if (data['dial_code'] != null && (data['dial_code'] as String).isNotEmpty) {
+          dialCode = data['dial_code'] as String;
+        }
+        if (data['phone'] != null && (data['phone'] as String).isNotEmpty) {
+          _profile = _profile.copyWith(phone: data['phone'] as String);
+          phoneController.text = _profile.phone;
+        }
+        institutionController.text = data['institution_name'] ?? '';
+        taglineController.text = data['tagline'] ?? '';
+        institutionEmailController.text = data['institution_email'] ?? '';
+        websiteController.text = data['website'] ?? '';
+        addressController.text = data['address'] ?? '';
+        keyOfferingsController.text = data['key_offerings'] ?? '';
+        uspController.text = data['usp'] ?? '';
+        notifyListeners();
+      }
+    } catch (e, st) {
+      debugPrint('[ProfileViewModel] _loadFromDatabase error: $e');
+      debugPrint('[ProfileViewModel] Stack: $st');
+    }
+  }
+
+  Future<void> saveAccountChanges() async {
+    _isSaving = true;
+    _saveMessage = null;
     notifyListeners();
+
+    try {
+      await AuthService.updatePhone(phoneController.text);
+      await Supabase.instance.client.from('profiles').upsert({
+        'id': AuthService.currentUser!.id,
+        'phone': phoneController.text,
+        'dial_code': dialCode,
+      });
+      await AuthService.updatePhone('${dialCode}${phoneController.text}');
+      
+      _profile = _profile.copyWith(phone: phoneController.text);
+      _saveMessage = 'Phone number saved';
+    } catch (e, st) {
+      debugPrint('[ProfileViewModel] saveAccountChanges error: $e');
+      debugPrint('[ProfileViewModel] Stack: $st');
+      _saveMessage =
+          'Failed to save: ${e.toString().replaceFirst('Exception: ', '')}';
+    } finally {
+      _isSaving = false;
+      notifyListeners();
+    }
   }
 
-  void saveBrandKit() {
+  void resetBrandKit() {
+    institutionController.clear();
+    taglineController.clear();
+    institutionEmailController.clear();
+    websiteController.clear();
+    addressController.clear();
+    keyOfferingsController.clear();
+    uspController.clear();
     _profile = _profile.copyWith(
-      institutionName: institutionController.text,
-      tagline: taglineController.text,
-      institutionEmail: institutionEmailController.text,
-      website: websiteController.text,
-      address: addressController.text,
-      keyOfferings: keyOfferingsController.text,
-      usp: uspController.text,
+      institutionName: '',
+      tagline: '',
+      institutionEmail: '',
+      website: '',
+      address: '',
+      keyOfferings: '',
+      usp: '',
     );
     notifyListeners();
+  }
+
+  Future<void> saveBrandKit() async {
+    _isSavingBrandKit = true;
+    _brandKitMessage = null;
+    notifyListeners();
+
+    try {
+      await Supabase.instance.client.from('profiles').upsert({
+        'id': AuthService.currentUser!.id,
+        if (institutionController.text.isNotEmpty) 'institution_name': institutionController.text,
+        if (taglineController.text.isNotEmpty) 'tagline': taglineController.text,
+        if (institutionEmailController.text.isNotEmpty) 'institution_email': institutionEmailController.text,
+        if (websiteController.text.isNotEmpty) 'website': websiteController.text,
+        if (addressController.text.isNotEmpty) 'address': addressController.text,
+        if (keyOfferingsController.text.isNotEmpty) 'key_offerings': keyOfferingsController.text,
+        if (uspController.text.isNotEmpty) 'usp': uspController.text,
+      });
+      _profile = _profile.copyWith(
+        institutionName: institutionController.text,
+        tagline: taglineController.text,
+        institutionEmail: institutionEmailController.text,
+        website: websiteController.text,
+        address: addressController.text,
+        keyOfferings: keyOfferingsController.text,
+        usp: uspController.text,
+      );
+      _brandKitMessage = 'Brand Kit saved';
+    } catch (e, st) {
+      debugPrint('[ProfileViewModel] saveBrandKit error: $e');
+      debugPrint('[ProfileViewModel] Stack: $st');
+      _brandKitMessage = 'Failed to save: ${e.toString().replaceFirst('Exception: ', '')}';
+    } finally {
+      _isSavingBrandKit = false;
+      notifyListeners();
+    }
   }
 
   void updateDefaultCountry(String value) {
@@ -123,7 +285,9 @@ class ProfileViewModel extends ChangeNotifier {
           ),
           TextButton(
             onPressed: () => Navigator.pop(ctx, true),
-            style: TextButton.styleFrom(foregroundColor: const Color(0xFFD32F2F)),
+            style: TextButton.styleFrom(
+              foregroundColor: const Color(0xFFD32F2F),
+            ),
             child: const Text('Sign Out'),
           ),
         ],

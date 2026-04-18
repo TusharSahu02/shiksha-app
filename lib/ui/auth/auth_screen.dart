@@ -49,7 +49,9 @@ class _AuthScreenState extends State<AuthScreen> with SingleTickerProviderStateM
       Navigator.of(context).pushReplacement(
         MaterialPageRoute(builder: (_) => const HomeScreen()),
       );
-    } catch (e) {
+    } catch (e, st) {
+      debugPrint('[AuthScreen] _handleGoogleSignIn error: $e');
+      debugPrint('[AuthScreen] Stack: $st');
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
