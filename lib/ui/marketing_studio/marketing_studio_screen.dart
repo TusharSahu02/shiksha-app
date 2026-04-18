@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
+import 'package:share_plus/share_plus.dart';
+import '../../services/pdf_export_service.dart';
 import '../../theme/app_colors.dart';
 import '../core/widgets/app_form_field.dart';
 import 'marketing_studio_view_model.dart';
@@ -74,9 +77,16 @@ class _MarketingStudioView extends StatelessWidget {
               const SizedBox(height: 24),
 
               // Content area
-              if (vm.selectedTab == 0)
-                _PrintMaterialsForm(vm: vm)
-              else if (vm.selectedTab == 1)
+              if (vm.selectedTab == 0) ...[
+                _PrintMaterialsForm(vm: vm),
+                if (vm.printResult != null) ...[
+                  const SizedBox(height: 24),
+                  _PrintResultCard(
+                    material: vm.printResult!,
+                    onClear: vm.clearPrintResult,
+                  ),
+                ],
+              ] else if (vm.selectedTab == 1)
                 _ReelCreatorForm(vm: vm)
               else if (vm.selectedTab == 2)
                 _ImageCreatorForm(vm: vm),
@@ -493,25 +503,340 @@ class _PrintMaterialsForm extends StatelessWidget {
           ),
           const SizedBox(height: 20),
 
+          // Error message
+          if (vm.printError != null) ...[
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: const Color(0xFFFFEBEE),
+                borderRadius: BorderRadius.circular(10),
+                border: Border.all(color: const Color(0xFFEF9A9A)),
+              ),
+              child: Text(
+                vm.printError!,
+                style: const TextStyle(fontSize: 13, color: Color(0xFFB71C1C)),
+              ),
+            ),
+            const SizedBox(height: 12),
+          ],
+
           // Generate button
           SizedBox(
             width: double.infinity,
             height: 50,
             child: ElevatedButton.icon(
-              onPressed: vm.generatePrintMaterial,
-              icon: const Icon(Icons.auto_awesome, size: 18),
-              label: const Text(
-                'Generate',
-                style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
+              onPressed: vm.isGeneratingPrint ? null : vm.generatePrintMaterial,
+              icon: vm.isGeneratingPrint
+                  ? const SizedBox(
+                      width: 18,
+                      height: 18,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        color: Colors.white,
+                      ),
+                    )
+                  : const Icon(Icons.auto_awesome, size: 18),
+              label: Text(
+                vm.isGeneratingPrint ? 'Generating...' : 'Generate',
+                style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
               ),
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppColors.secondary,
                 foregroundColor: Colors.white,
+                disabledBackgroundColor:
+                    AppColors.secondary.withValues(alpha: 0.7),
+                disabledForegroundColor: Colors.white70,
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(12),
                 ),
                 elevation: 0,
               ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _PrintResultCard extends StatelessWidget {
+  final Map<String, dynamic> material;
+  final VoidCallback onClear;
+
+  const _PrintResultCard({required this.material, required this.onClear});
+
+  @override
+  Widget build(BuildContext context) {
+    final sections = material['sections'] as List?;
+    final highlights = material['key_highlights'] as List?;
+
+    return AppCard(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(Icons.description_outlined, size: 20, color: AppColors.secondary),
+              const SizedBox(width: 8),
+              Text(
+                'Generated Material',
+                style: TextStyle(
+                  fontSize: 17,
+                  fontWeight: FontWeight.w700,
+                  color: AppColors.primaryDark,
+                ),
+              ),
+              const Spacer(),
+              IconButton(
+                onPressed: onClear,
+                icon: const Icon(Icons.close, size: 20),
+                padding: EdgeInsets.zero,
+                constraints: const BoxConstraints(),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+
+          if (material['title'] != null)
+            _PrintSection(label: 'TITLE', content: material['title'] as String),
+          if (material['subtitle'] != null)
+            _PrintSection(label: 'SUBTITLE', content: material['subtitle'] as String),
+
+          if (sections != null)
+            for (final section in sections)
+              if (section is Map<String, dynamic>)
+                _PrintSection(
+                  label: (section['heading'] as String? ?? '').toUpperCase(),
+                  content: section['content'] as String? ?? '',
+                ),
+
+          if (highlights != null)
+            _PrintSection(
+              label: 'KEY HIGHLIGHTS',
+              content: highlights.map((h) => '\u2022 $h').join('\n'),
+            ),
+
+          if (material['call_to_action'] != null)
+            _PrintSection(label: 'CALL TO ACTION', content: material['call_to_action'] as String),
+          if (material['contact_block'] != null)
+            _PrintSection(label: 'CONTACT', content: material['contact_block'] as String),
+          if (material['design_notes'] != null)
+            _PrintSection(label: 'DESIGN NOTES', content: material['design_notes'] as String),
+          if (material['whatsapp_message'] != null)
+            _PrintSection(
+              label: 'WHATSAPP MESSAGE',
+              content: material['whatsapp_message'] as String,
+              copyable: true,
+            ),
+          if (material['footer_text'] != null)
+            _PrintSection(label: 'FOOTER', content: material['footer_text'] as String),
+          if (material['raw_text'] != null)
+            _PrintSection(label: 'CONTENT', content: material['raw_text'] as String),
+
+          const Divider(height: 32),
+
+          Row(
+            children: [
+              Expanded(
+                child: SizedBox(
+                  height: 46,
+                  child: OutlinedButton.icon(
+                    onPressed: () {
+                      Clipboard.setData(ClipboardData(text: _buildFullText()));
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: const Text('Material copied!'),
+                          behavior: SnackBarBehavior.floating,
+                          duration: const Duration(seconds: 1),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                        ),
+                      );
+                    },
+                    icon: const Icon(Icons.copy, size: 18),
+                    label: const Text(
+                      'Copy All',
+                      style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
+                    ),
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: AppColors.secondary,
+                      side: BorderSide(color: AppColors.secondary),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: SizedBox(
+                  height: 46,
+                  child: ElevatedButton.icon(
+                    onPressed: () async {
+                      final box = context.findRenderObject() as RenderBox?;
+                      await SharePlus.instance.share(
+                        ShareParams(
+                          text: _buildFullText(),
+                          sharePositionOrigin: box != null
+                              ? box.localToGlobal(Offset.zero) & box.size
+                              : null,
+                        ),
+                      );
+                    },
+                    icon: const Icon(Icons.share, size: 18),
+                    label: const Text(
+                      'Share',
+                      style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
+                    ),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppColors.secondary,
+                      foregroundColor: Colors.white,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      elevation: 0,
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          SizedBox(
+            width: double.infinity,
+            height: 46,
+            child: OutlinedButton.icon(
+              onPressed: () => PdfExportService.exportPrintMaterial(material),
+              icon: const Icon(Icons.picture_as_pdf, size: 18),
+              label: const Text(
+                'Download PDF',
+                style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
+              ),
+              style: OutlinedButton.styleFrom(
+                foregroundColor: AppColors.primaryDark,
+                side: BorderSide(color: AppColors.primaryDark.withValues(alpha: 0.3)),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10),
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  String _buildFullText() {
+    final buffer = StringBuffer();
+
+    if (material['title'] != null) {
+      buffer.writeln(material['title']);
+      buffer.writeln();
+    }
+    if (material['subtitle'] != null) {
+      buffer.writeln(material['subtitle']);
+      buffer.writeln();
+    }
+
+    final sections = material['sections'] as List?;
+    if (sections != null) {
+      for (final section in sections) {
+        if (section is Map<String, dynamic>) {
+          buffer.writeln('--- ${section['heading'] ?? ''} ---');
+          buffer.writeln(section['content'] ?? '');
+          buffer.writeln();
+        }
+      }
+    }
+
+    final highlights = material['key_highlights'] as List?;
+    if (highlights != null) {
+      buffer.writeln('KEY HIGHLIGHTS:');
+      for (final h in highlights) {
+        buffer.writeln('\u2022 $h');
+      }
+      buffer.writeln();
+    }
+
+    if (material['call_to_action'] != null) {
+      buffer.writeln('CTA: ${material['call_to_action']}');
+      buffer.writeln();
+    }
+    if (material['contact_block'] != null) {
+      buffer.writeln('CONTACT: ${material['contact_block']}');
+      buffer.writeln();
+    }
+    if (material['whatsapp_message'] != null) {
+      buffer.writeln('WHATSAPP: ${material['whatsapp_message']}');
+    }
+    if (material['raw_text'] != null) {
+      buffer.writeln(material['raw_text']);
+    }
+
+    return buffer.toString().trim();
+  }
+}
+
+class _PrintSection extends StatelessWidget {
+  final String label;
+  final String content;
+  final bool copyable;
+
+  const _PrintSection({
+    required this.label,
+    required this.content,
+    this.copyable = false,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Expanded(
+                child: Text(
+                  label,
+                  style: TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w700,
+                    color: AppColors.secondary,
+                    letterSpacing: 0.5,
+                  ),
+                ),
+              ),
+              if (copyable)
+                GestureDetector(
+                  onTap: () {
+                    Clipboard.setData(ClipboardData(text: content));
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text('$label copied!'),
+                        behavior: SnackBarBehavior.floating,
+                        duration: const Duration(seconds: 1),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                      ),
+                    );
+                  },
+                  child: Icon(Icons.copy, size: 16, color: AppColors.textSecondary),
+                ),
+            ],
+          ),
+          const SizedBox(height: 6),
+          Text(
+            content,
+            style: TextStyle(
+              fontSize: 13,
+              height: 1.5,
+              color: AppColors.primaryDark,
             ),
           ),
         ],

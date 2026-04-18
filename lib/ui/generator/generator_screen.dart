@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'package:share_plus/share_plus.dart';
+import '../../services/pdf_export_service.dart';
 import '../../theme/app_colors.dart';
 import '../core/widgets/app_form_field.dart';
 import 'generator_view_model.dart';
@@ -451,7 +452,7 @@ class _CampaignResultCard extends StatelessWidget {
 
           const Divider(height: 32),
 
-          // Copy All + Share buttons
+          // Copy All + Share + Download PDF buttons
           Row(
             children: [
               Expanded(
@@ -527,6 +528,26 @@ class _CampaignResultCard extends StatelessWidget {
                 ),
               ),
             ],
+          ),
+          const SizedBox(height: 12),
+          SizedBox(
+            width: double.infinity,
+            height: 46,
+            child: OutlinedButton.icon(
+              onPressed: () => PdfExportService.exportCampaign(campaign),
+              icon: const Icon(Icons.picture_as_pdf, size: 18),
+              label: const Text(
+                'Download PDF',
+                style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
+              ),
+              style: OutlinedButton.styleFrom(
+                foregroundColor: AppColors.primaryDark,
+                side: BorderSide(color: AppColors.primaryDark.withValues(alpha: 0.3)),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10),
+                ),
+              ),
+            ),
           ),
         ],
       ),

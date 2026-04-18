@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../data/models/image_config.dart';
 import '../../data/models/print_material_config.dart';
 import '../../data/models/reel_config.dart';
+import '../../services/campaign_service.dart';
 
 class TabItem {
   final IconData icon;
@@ -27,6 +28,16 @@ class MarketingStudioViewModel extends ChangeNotifier {
 
   ImageConfig _imageConfig = const ImageConfig();
   ImageConfig get imageConfig => _imageConfig;
+
+  // Print material generation state
+  bool _isGeneratingPrint = false;
+  bool get isGeneratingPrint => _isGeneratingPrint;
+
+  String? _printError;
+  String? get printError => _printError;
+
+  Map<String, dynamic>? _printResult;
+  Map<String, dynamic>? get printResult => _printResult;
 
   // Print material controllers
   final topicController = TextEditingController();
@@ -142,19 +153,65 @@ class MarketingStudioViewModel extends ChangeNotifier {
     notifyListeners();
   }
 
-  void generatePrintMaterial() {
+  Future<void> generatePrintMaterial() async {
+    if (_isGeneratingPrint) return;
+
+    final topic = topicController.text.trim();
+    if (topic.isEmpty) {
+      _printError = 'Please enter a topic';
+      notifyListeners();
+      return;
+    }
+
+    _isGeneratingPrint = true;
+    _printError = null;
+    _printResult = null;
+    notifyListeners();
+
     _printConfig = _printConfig.copyWith(
-      topic: topicController.text,
-      institution: institutionController.text,
-      tagline: taglineController.text,
-      phone: phoneController.text,
-      email: emailController.text,
-      website: websiteController.text,
-      address: addressController.text,
-      keyOfferings: keyOfferingsController.text,
-      usp: uspController.text,
+      topic: topic,
+      institution: institutionController.text.trim(),
+      tagline: taglineController.text.trim(),
+      phone: phoneController.text.trim(),
+      email: emailController.text.trim(),
+      website: websiteController.text.trim(),
+      address: addressController.text.trim(),
+      keyOfferings: keyOfferingsController.text.trim(),
+      usp: uspController.text.trim(),
     );
-    // TODO: Trigger material generation
+
+    try {
+      _printResult = await CampaignService.generatePrintMaterial(
+        topic: _printConfig.topic,
+        materialType: _printConfig.materialType,
+        outputLanguage: _printConfig.outputLanguage,
+        outputSize: _printConfig.outputSize,
+        designStyle: _printConfig.designStyle,
+        targetAudience: _printConfig.targetAudience,
+        institution: _printConfig.institution,
+        tagline: _printConfig.tagline,
+        phone: _printConfig.phone,
+        email: _printConfig.email,
+        website: _printConfig.website,
+        address: _printConfig.address,
+        keyOfferings: _printConfig.keyOfferings,
+        usp: _printConfig.usp,
+      );
+    } catch (e) {
+      debugPrint('=====================================================================================');
+      debugPrint('[StudioVM] PRINT ERROR: $e');
+      debugPrint('=====================================================================================');
+      _printError = e.toString().replaceFirst('Exception: ', '');
+    } finally {
+      _isGeneratingPrint = false;
+      notifyListeners();
+    }
+  }
+
+  void clearPrintResult() {
+    _printResult = null;
+    _printError = null;
+    notifyListeners();
   }
 
   void generateReel() {
