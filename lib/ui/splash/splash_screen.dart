@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
+
+import '../../services/auth_service.dart';
 import '../../theme/app_colors.dart';
+import '../auth/auth_screen.dart';
+import '../home/home_screen.dart';
 
 class SplashScreen extends StatefulWidget {
-  final Widget nextScreen;
-
-  const SplashScreen({super.key, required this.nextScreen});
+  const SplashScreen({super.key});
 
   @override
   State<SplashScreen> createState() => _SplashScreenState();
@@ -38,11 +40,13 @@ class _SplashScreenState extends State<SplashScreen>
     _controller.forward();
 
     Future.delayed(const Duration(seconds: 3), () {
-      if (mounted) {
-        Navigator.of(
-          context,
-        ).pushReplacement(MaterialPageRoute(builder: (_) => widget.nextScreen));
-      }
+      if (!mounted) return;
+      final nextScreen = AuthService.isLoggedIn
+          ? const HomeScreen()
+          : const AuthScreen();
+      Navigator.of(context).pushReplacement(
+        MaterialPageRoute(builder: (_) => nextScreen),
+      );
     });
   }
 
@@ -72,16 +76,6 @@ class _SplashScreenState extends State<SplashScreen>
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               Image.asset('assets/images/logo.png', width: 200, height: 200),
-              // const SizedBox(height: 24),
-              // const Text(
-              //   'SHIKSHA',
-              //   style: TextStyle(
-              //     fontSize: 32,
-              //     fontWeight: FontWeight.bold,
-              //     color: AppColors.primaryDark,
-              //     letterSpacing: 4,
-              //   ),
-              // ),
             ],
           ),
         ),

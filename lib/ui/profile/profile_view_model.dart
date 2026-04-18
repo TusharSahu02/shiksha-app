@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import '../../data/models/user_profile.dart';
 import '../../data/models/subscription_tier.dart';
+import '../../services/auth_service.dart';
+import '../auth/auth_screen.dart';
 
 class ProfileViewModel extends ChangeNotifier {
   // Account
@@ -98,8 +100,13 @@ class ProfileViewModel extends ChangeNotifier {
     // TODO: Navigate to change password
   }
 
-  void signOut() {
-    // TODO: Sign out
+  Future<void> signOut(BuildContext context) async {
+    await AuthService.signOut();
+    if (!context.mounted) return;
+    Navigator.of(context).pushAndRemoveUntil(
+      MaterialPageRoute(builder: (_) => const AuthScreen()),
+      (_) => false,
+    );
   }
 
   void deleteAccount() {

@@ -1030,7 +1030,7 @@ class _DangerZoneCard extends StatelessWidget {
           _ActionTile(
             icon: Icons.logout,
             label: 'Sign Out',
-            onTap: vm.signOut,
+            onTap: () => vm.signOut(context),
             color: AppColors.textSecondary,
           ),
           _ActionTile(
