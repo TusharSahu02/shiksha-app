@@ -90,9 +90,16 @@ class _MarketingStudioView extends StatelessWidget {
                     onClear: vm.clearPrintResult,
                   ),
                 ],
-              ] else if (vm.selectedTab == 1)
-                _ReelCreatorForm(vm: vm)
-              else if (vm.selectedTab == 2) ...[
+              ] else if (vm.selectedTab == 1) ...[
+                _ReelCreatorForm(vm: vm),
+                if (vm.reelResult != null) ...[
+                  const SizedBox(height: 24),
+                  _ReelResultCard(
+                    script: vm.reelResult!,
+                    onClear: vm.clearReelResult,
+                  ),
+                ],
+              ] else if (vm.selectedTab == 2) ...[
                 _ImageCreatorForm(vm: vm),
                 if (vm.imageResult != null) ...[
                   const SizedBox(height: 24),
@@ -1025,20 +1032,54 @@ class _ReelCreatorForm extends StatelessWidget {
           ),
           const SizedBox(height: 20),
 
+          // Error message
+          if (vm.reelError != null) ...[
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: const Color(0xFFFFEBEE),
+                borderRadius: BorderRadius.circular(10),
+                border: Border.all(color: const Color(0xFFEF9A9A)),
+              ),
+              child: Text(
+                vm.reelError!,
+                style: const TextStyle(fontSize: 13, color: Color(0xFFB71C1C)),
+              ),
+            ),
+            const SizedBox(height: 12),
+          ],
+
           // Generate button
           SizedBox(
             width: double.infinity,
             height: 50,
             child: ElevatedButton.icon(
-              onPressed: vm.generateReel,
-              icon: const Icon(Icons.auto_awesome, size: 18),
-              label: const Text(
-                'Generate Complete Reel Script',
-                style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
+              onPressed: vm.isGeneratingReel || !vm.isReelFormValid
+                  ? null
+                  : vm.generateReel,
+              icon: vm.isGeneratingReel
+                  ? const SizedBox(
+                      width: 18,
+                      height: 18,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        color: Colors.white,
+                      ),
+                    )
+                  : const Icon(Icons.auto_awesome, size: 18),
+              label: Text(
+                vm.isGeneratingReel
+                    ? 'Generating Script...'
+                    : 'Generate Complete Reel Script',
+                style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
               ),
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppColors.secondary,
                 foregroundColor: Colors.white,
+                disabledBackgroundColor:
+                    AppColors.secondary.withValues(alpha: 0.7),
+                disabledForegroundColor: Colors.white70,
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(12),
                 ),
@@ -1110,6 +1151,457 @@ class _ToggleChip extends StatelessWidget {
         ),
       ),
     );
+  }
+}
+
+class _ReelResultCard extends StatelessWidget {
+  final Map<String, dynamic> script;
+  final VoidCallback onClear;
+
+  const _ReelResultCard({required this.script, required this.onClear});
+
+  @override
+  Widget build(BuildContext context) {
+    final scenes = script['scenes'] as List? ?? [];
+    final captions = script['caption_sequence'] as List? ?? [];
+    final hashtags = script['hashtags'] as List? ?? [];
+
+    return AppCard(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(Icons.videocam_outlined, size: 20, color: AppColors.secondary),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  script['title'] as String? ?? 'Reel Script',
+                  style: TextStyle(
+                    fontSize: 17,
+                    fontWeight: FontWeight.w700,
+                    color: AppColors.primaryDark,
+                  ),
+                ),
+              ),
+              IconButton(
+                onPressed: onClear,
+                icon: const Icon(Icons.close, size: 20),
+                padding: EdgeInsets.zero,
+                constraints: const BoxConstraints(),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+
+          if (script['hook'] != null) ...[
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: AppColors.secondary.withValues(alpha: 0.08),
+                borderRadius: BorderRadius.circular(10),
+                border: Border.all(color: AppColors.secondary.withValues(alpha: 0.3)),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'HOOK',
+                    style: TextStyle(
+                      fontSize: 10,
+                      fontWeight: FontWeight.w700,
+                      color: AppColors.secondary,
+                      letterSpacing: 0.5,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    script['hook'] as String,
+                    style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                      color: AppColors.primaryDark,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 16),
+          ],
+
+          if (scenes.isNotEmpty) ...[
+            Text(
+              'SCENES',
+              style: TextStyle(
+                fontSize: 11,
+                fontWeight: FontWeight.w700,
+                color: AppColors.secondary,
+                letterSpacing: 0.5,
+              ),
+            ),
+            const SizedBox(height: 10),
+            for (final scene in scenes) ...[
+              if (scene is Map<String, dynamic>)
+                Container(
+                  width: double.infinity,
+                  margin: const EdgeInsets.only(bottom: 12),
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFF9F9F9),
+                    borderRadius: BorderRadius.circular(10),
+                    border: Border.all(color: const Color(0xFFEEEEEE)),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                            decoration: BoxDecoration(
+                              color: AppColors.secondary.withValues(alpha: 0.12),
+                              borderRadius: BorderRadius.circular(6),
+                            ),
+                            child: Text(
+                              'Scene ${scene['scene_number'] ?? ''}',
+                              style: TextStyle(
+                                fontSize: 11,
+                                fontWeight: FontWeight.w700,
+                                color: AppColors.secondary,
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          Text(
+                            scene['duration'] as String? ?? '',
+                            style: TextStyle(
+                              fontSize: 11,
+                              color: AppColors.textSecondary,
+                            ),
+                          ),
+                          const Spacer(),
+                          if (scene['transition'] != null)
+                            Text(
+                              scene['transition'] as String,
+                              style: TextStyle(
+                                fontSize: 10,
+                                fontWeight: FontWeight.w600,
+                                color: AppColors.textSecondary,
+                              ),
+                            ),
+                        ],
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        scene['visual'] as String? ?? '',
+                        style: TextStyle(
+                          fontSize: 13,
+                          height: 1.4,
+                          color: AppColors.primaryDark,
+                        ),
+                      ),
+                      if (scene['text_overlay'] != null && (scene['text_overlay'] as String).isNotEmpty) ...[
+                        const SizedBox(height: 6),
+                        Row(
+                          children: [
+                            Icon(Icons.subtitles, size: 14, color: AppColors.textSecondary),
+                            const SizedBox(width: 4),
+                            Expanded(
+                              child: Text(
+                                scene['text_overlay'] as String,
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  fontStyle: FontStyle.italic,
+                                  color: AppColors.textSecondary,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                      if (scene['audio_cue'] != null && (scene['audio_cue'] as String).isNotEmpty) ...[
+                        const SizedBox(height: 6),
+                        Row(
+                          children: [
+                            Icon(Icons.music_note, size: 14, color: AppColors.textSecondary),
+                            const SizedBox(width: 4),
+                            Expanded(
+                              child: Text(
+                                scene['audio_cue'] as String,
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  color: AppColors.textSecondary,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ],
+                  ),
+                ),
+            ],
+          ],
+
+          if (script['voiceover_script'] != null && (script['voiceover_script'] as String).isNotEmpty) ...[
+            const SizedBox(height: 4),
+            Text(
+              'VOICEOVER SCRIPT',
+              style: TextStyle(
+                fontSize: 11,
+                fontWeight: FontWeight.w700,
+                color: AppColors.secondary,
+                letterSpacing: 0.5,
+              ),
+            ),
+            const SizedBox(height: 6),
+            Text(
+              script['voiceover_script'] as String,
+              style: TextStyle(
+                fontSize: 13,
+                height: 1.5,
+                color: AppColors.primaryDark,
+              ),
+            ),
+            const SizedBox(height: 16),
+          ],
+
+          if (captions.isNotEmpty) ...[
+            Text(
+              'CAPTION SEQUENCE',
+              style: TextStyle(
+                fontSize: 11,
+                fontWeight: FontWeight.w700,
+                color: AppColors.secondary,
+                letterSpacing: 0.5,
+              ),
+            ),
+            const SizedBox(height: 6),
+            for (int i = 0; i < captions.length; i++)
+              Padding(
+                padding: const EdgeInsets.only(bottom: 4),
+                child: Text(
+                  '${i + 1}. ${captions[i]}',
+                  style: TextStyle(
+                    fontSize: 12,
+                    height: 1.4,
+                    color: AppColors.primaryDark,
+                  ),
+                ),
+              ),
+            const SizedBox(height: 16),
+          ],
+
+          if (script['music_recommendation'] != null) ...[
+            Row(
+              children: [
+                Icon(Icons.music_note, size: 16, color: AppColors.secondary),
+                const SizedBox(width: 6),
+                Expanded(
+                  child: Text(
+                    script['music_recommendation'] as String,
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: AppColors.textSecondary,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+          ],
+
+          if (hashtags.isNotEmpty) ...[
+            Wrap(
+              spacing: 6,
+              runSpacing: 6,
+              children: hashtags.map((tag) {
+                final t = tag.toString().startsWith('#') ? tag.toString() : '#$tag';
+                return Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFF0F0F0),
+                    borderRadius: BorderRadius.circular(6),
+                  ),
+                  child: Text(
+                    t,
+                    style: TextStyle(
+                      fontSize: 11,
+                      fontWeight: FontWeight.w600,
+                      color: AppColors.textSecondary,
+                    ),
+                  ),
+                );
+              }).toList(),
+            ),
+            const SizedBox(height: 12),
+          ],
+
+          if (script['posting_tips'] != null) ...[
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Icon(Icons.tips_and_updates, size: 16, color: AppColors.secondary),
+                const SizedBox(width: 6),
+                Expanded(
+                  child: Text(
+                    script['posting_tips'] as String,
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: AppColors.textSecondary,
+                      height: 1.4,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+          ],
+
+          const Divider(height: 24),
+
+          Row(
+            children: [
+              Expanded(
+                child: SizedBox(
+                  height: 46,
+                  child: OutlinedButton.icon(
+                    onPressed: () {
+                      Clipboard.setData(ClipboardData(text: _buildFullText()));
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: const Text('Script copied!'),
+                          behavior: SnackBarBehavior.floating,
+                          duration: const Duration(seconds: 1),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                        ),
+                      );
+                    },
+                    icon: const Icon(Icons.copy, size: 18),
+                    label: const Text(
+                      'Copy All',
+                      style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
+                    ),
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: AppColors.secondary,
+                      side: BorderSide(color: AppColors.secondary),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: SizedBox(
+                  height: 46,
+                  child: ElevatedButton.icon(
+                    onPressed: () async {
+                      final box = context.findRenderObject() as RenderBox?;
+                      await SharePlus.instance.share(
+                        ShareParams(
+                          text: _buildFullText(),
+                          sharePositionOrigin: box != null
+                              ? box.localToGlobal(Offset.zero) & box.size
+                              : null,
+                        ),
+                      );
+                    },
+                    icon: const Icon(Icons.share, size: 18),
+                    label: const Text(
+                      'Share',
+                      style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
+                    ),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppColors.secondary,
+                      foregroundColor: Colors.white,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      elevation: 0,
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          SizedBox(
+            width: double.infinity,
+            height: 46,
+            child: OutlinedButton.icon(
+              onPressed: () => PdfExportService.exportReelScript(script),
+              icon: const Icon(Icons.picture_as_pdf, size: 18),
+              label: const Text(
+                'Download PDF',
+                style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
+              ),
+              style: OutlinedButton.styleFrom(
+                foregroundColor: AppColors.primaryDark,
+                side: BorderSide(color: AppColors.primaryDark.withValues(alpha: 0.3)),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10),
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  String _buildFullText() {
+    final buffer = StringBuffer();
+    buffer.writeln(script['title'] ?? 'Reel Script');
+    buffer.writeln();
+
+    if (script['hook'] != null) {
+      buffer.writeln('HOOK: ${script['hook']}');
+      buffer.writeln();
+    }
+
+    final scenes = script['scenes'] as List? ?? [];
+    for (final scene in scenes) {
+      if (scene is Map<String, dynamic>) {
+        buffer.writeln('--- Scene ${scene['scene_number']} (${scene['duration']}) ---');
+        buffer.writeln('Visual: ${scene['visual'] ?? ''}');
+        if (scene['text_overlay'] != null && (scene['text_overlay'] as String).isNotEmpty) {
+          buffer.writeln('Caption: ${scene['text_overlay']}');
+        }
+        if (scene['audio_cue'] != null && (scene['audio_cue'] as String).isNotEmpty) {
+          buffer.writeln('Audio: ${scene['audio_cue']}');
+        }
+        buffer.writeln('Transition: ${scene['transition'] ?? ''}');
+        buffer.writeln();
+      }
+    }
+
+    if (script['voiceover_script'] != null && (script['voiceover_script'] as String).isNotEmpty) {
+      buffer.writeln('VOICEOVER:');
+      buffer.writeln(script['voiceover_script']);
+      buffer.writeln();
+    }
+
+    if (script['music_recommendation'] != null) {
+      buffer.writeln('MUSIC: ${script['music_recommendation']}');
+      buffer.writeln();
+    }
+
+    final hashtags = script['hashtags'] as List? ?? [];
+    if (hashtags.isNotEmpty) {
+      buffer.writeln(hashtags.map((t) => t.toString().startsWith('#') ? t : '#$t').join(' '));
+      buffer.writeln();
+    }
+
+    if (script['posting_tips'] != null) {
+      buffer.writeln('TIPS: ${script['posting_tips']}');
+    }
+
+    return buffer.toString().trim();
   }
 }
 

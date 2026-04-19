@@ -4,13 +4,23 @@ import '../../data/constants/country_dial_codes.dart';
 import '../../data/constants/country_languages.dart';
 import '../../data/models/campaign_config.dart';
 import '../../services/campaign_service.dart';
+import '../../services/usage_service.dart';
 
 class GeneratorViewModel extends ChangeNotifier {
   final topicController = TextEditingController();
   final phoneController = TextEditingController();
 
+  GeneratorViewModel() {
+    topicController.addListener(notifyListeners);
+    phoneController.addListener(notifyListeners);
+  }
+
   CampaignConfig _config = const CampaignConfig();
   CampaignConfig get config => _config;
+
+  bool get isFormValid =>
+      topicController.text.trim().isNotEmpty &&
+      phoneController.text.trim().isNotEmpty;
 
   bool _isGenerating = false;
   bool get isGenerating => _isGenerating;
@@ -75,6 +85,7 @@ class GeneratorViewModel extends ChangeNotifier {
         language: _config.language,
         phone: fullPhone,
       );
+      UsageService.incrementCampaign();
       debugPrint('=====================================================================================');
       debugPrint('[GeneratorVM] Generation SUCCESS');
       debugPrint('=====================================================================================');

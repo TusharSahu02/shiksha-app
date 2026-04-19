@@ -979,46 +979,46 @@ class _PreferencesCard extends StatelessWidget {
 // ─────────────────────────────────────────────
 // 8. Notifications
 // ─────────────────────────────────────────────
-class _NotificationsCard extends StatelessWidget {
-  final ProfileViewModel vm;
-  const _NotificationsCard({required this.vm});
+// class _NotificationsCard extends StatelessWidget {
+//   final ProfileViewModel vm;
+//   const _NotificationsCard({required this.vm});
 
-  @override
-  Widget build(BuildContext context) {
-    return AppCard(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          _SectionHeader(
-            icon: Icons.notifications_outlined,
-            title: 'Notifications',
-          ),
-          const SizedBox(height: 16),
-          _NotifToggle(
-            label: 'Campaign generation complete',
-            value: vm.profile.notifyOnComplete,
-            onChanged: vm.toggleNotifyOnComplete,
-          ),
-          _NotifToggle(
-            label: 'Weekly usage summary',
-            value: vm.profile.notifyWeeklySummary,
-            onChanged: vm.toggleNotifyWeeklySummary,
-          ),
-          _NotifToggle(
-            label: 'New feature announcements',
-            value: vm.profile.notifyNewFeatures,
-            onChanged: vm.toggleNotifyNewFeatures,
-          ),
-          _NotifToggle(
-            label: 'Subscription renewal reminder',
-            value: vm.profile.notifyRenewal,
-            onChanged: vm.toggleNotifyRenewal,
-          ),
-        ],
-      ),
-    );
-  }
-}
+//   @override
+//   Widget build(BuildContext context) {
+//     return AppCard(
+//       child: Column(
+//         crossAxisAlignment: CrossAxisAlignment.start,
+//         children: [
+//           _SectionHeader(
+//             icon: Icons.notifications_outlined,
+//             title: 'Notifications',
+//           ),
+//           const SizedBox(height: 16),
+//           _NotifToggle(
+//             label: 'Campaign generation complete',
+//             value: vm.profile.notifyOnComplete,
+//             onChanged: vm.toggleNotifyOnComplete,
+//           ),
+//           _NotifToggle(
+//             label: 'Weekly usage summary',
+//             value: vm.profile.notifyWeeklySummary,
+//             onChanged: vm.toggleNotifyWeeklySummary,
+//           ),
+//           _NotifToggle(
+//             label: 'New feature announcements',
+//             value: vm.profile.notifyNewFeatures,
+//             onChanged: vm.toggleNotifyNewFeatures,
+//           ),
+//           _NotifToggle(
+//             label: 'Subscription renewal reminder',
+//             value: vm.profile.notifyRenewal,
+//             onChanged: vm.toggleNotifyRenewal,
+//           ),
+//         ],
+//       ),
+//     );
+//   }
+// }
 
 class _NotifToggle extends StatelessWidget {
   final String label;
@@ -1456,41 +1456,41 @@ class _SectionHeader extends StatelessWidget {
   }
 }
 
-class _PrimaryButton extends StatelessWidget {
-  final String label;
-  final IconData icon;
-  final VoidCallback onPressed;
+// class _PrimaryButton extends StatelessWidget {
+//   final String label;
+//   final IconData icon;
+//   final VoidCallback onPressed;
 
-  const _PrimaryButton({
-    required this.label,
-    required this.icon,
-    required this.onPressed,
-  });
+//   const _PrimaryButton({
+//     required this.label,
+//     required this.icon,
+//     required this.onPressed,
+//   });
 
-  @override
-  Widget build(BuildContext context) {
-    return SizedBox(
-      width: double.infinity,
-      height: 48,
-      child: ElevatedButton.icon(
-        onPressed: onPressed,
-        icon: Icon(icon, size: 18),
-        label: Text(
-          label,
-          style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w600),
-        ),
-        style: ElevatedButton.styleFrom(
-          backgroundColor: AppColors.secondary,
-          foregroundColor: Colors.white,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(10),
-          ),
-          elevation: 0,
-        ),
-      ),
-    );
-  }
-}
+//   @override
+//   Widget build(BuildContext context) {
+//     return SizedBox(
+//       width: double.infinity,
+//       height: 48,
+//       child: ElevatedButton.icon(
+//         onPressed: onPressed,
+//         icon: Icon(icon, size: 18),
+//         label: Text(
+//           label,
+//           style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w600),
+//         ),
+//         style: ElevatedButton.styleFrom(
+//           backgroundColor: AppColors.secondary,
+//           foregroundColor: Colors.white,
+//           shape: RoundedRectangleBorder(
+//             borderRadius: BorderRadius.circular(10),
+//           ),
+//           elevation: 0,
+//         ),
+//       ),
+//     );
+//   }
+// }
 
 class _ActionTile extends StatelessWidget {
   final IconData icon;

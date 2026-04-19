@@ -292,7 +292,9 @@ class _GeneratorViewState extends State<_GeneratorView>
                               height: 50,
                               child: ElevatedButton.icon(
                                 onPressed:
-                                    vm.isGenerating ? null : vm.generate,
+                                    vm.isGenerating || !vm.isFormValid
+                                        ? null
+                                        : vm.generate,
                                 icon: vm.isGenerating
                                     ? const SizedBox(
                                         width: 18,

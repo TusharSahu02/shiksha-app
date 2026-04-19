@@ -110,9 +110,9 @@ class ProfileViewModel extends ChangeNotifier {
     final userId = AuthService.currentUser!.id;
     final client = Supabase.instance.client;
 
-    try {
-      final monthStart = DateTime(DateTime.now().year, DateTime.now().month, 1).toUtc().toIso8601String();
+    debugPrint('[ProfileViewModel] userId: $userId');
 
+    try {
       final profileFuture = client
           .from('profiles')
           .select('phone, dial_code, institution_name, tagline, institution_email, website, address, key_offerings, usp')
@@ -120,39 +120,36 @@ class ProfileViewModel extends ChangeNotifier {
           .maybeSingle();
       final subFuture = client
           .from('subscriptions')
-          .select('tier')
+          .select('tier, renewal_date, used_images, used_videos, total_campaigns, total_images, total_videos, total_print_materials')
           .eq('id', userId)
           .maybeSingle();
-      final imageFuture = client
-          .from('usage_logs')
-          .select('id')
-          .eq('user_id', userId)
-          .eq('feature', 'image')
-          .gte('created_at', monthStart);
-      final videoFuture = client
-          .from('usage_logs')
-          .select('id')
-          .eq('user_id', userId)
-          .eq('feature', 'video')
-          .gte('created_at', monthStart);
 
-      final results = await Future.wait<dynamic>([profileFuture, subFuture, imageFuture, videoFuture]);
+      final results = await Future.wait<dynamic>([profileFuture, subFuture]);
 
       final data = results[0] as Map<String, dynamic>?;
       final subData = results[1] as Map<String, dynamic>?;
-      final imageRows = results[2] as List;
-      final videoRows = results[3] as List;
+
+      debugPrint('[ProfileViewModel] subData: $subData');
 
       final tierStr = subData?['tier'] as String? ?? 'free';
+      debugPrint('[ProfileViewModel] tierStr: "$tierStr"');
       final tier = SubscriptionTier.values.firstWhere(
         (t) => t.name == tierStr,
         orElse: () => SubscriptionTier.free,
       );
+      debugPrint('[ProfileViewModel] parsed tier: $tier');
 
       _profile = _profile.copyWith(
         tier: tier,
-        usedImages: imageRows.length,
-        usedVideos: videoRows.length,
+        renewalDate: subData?['renewal_date'] != null
+            ? DateTime.tryParse(subData!['renewal_date'] as String)
+            : null,
+        usedImages: subData?['used_images'] as int? ?? 0,
+        usedVideos: subData?['used_videos'] as int? ?? 0,
+        totalCampaigns: subData?['total_campaigns'] as int? ?? 0,
+        totalImages: subData?['total_images'] as int? ?? 0,
+        totalVideos: subData?['total_videos'] as int? ?? 0,
+        totalPrintMaterials: subData?['total_print_materials'] as int? ?? 0,
       );
 
       if (data != null) {

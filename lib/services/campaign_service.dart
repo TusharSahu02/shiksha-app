@@ -106,6 +106,40 @@ class CampaignService {
     return response.data['material'] as Map<String, dynamic>;
   }
 
+  static Future<Map<String, dynamic>> generateReelScript({
+    required String prompt,
+    String reelDuration = '',
+    String reelStyle = '',
+    String musicGenre = '',
+    String targetPlatform = '',
+    String videoQuality = '',
+    String scriptLanguage = '',
+    bool includeCaptions = true,
+    bool includeVoiceoverScript = false,
+  }) async {
+    final response = await _supabase.functions.invoke(
+      'generate-reel-script',
+      body: {
+        'prompt': prompt,
+        'reelDuration': reelDuration,
+        'reelStyle': reelStyle,
+        'musicGenre': musicGenre,
+        'targetPlatform': targetPlatform,
+        'videoQuality': videoQuality,
+        'scriptLanguage': scriptLanguage,
+        'includeCaptions': includeCaptions,
+        'includeVoiceoverScript': includeVoiceoverScript,
+      },
+    );
+
+    if (response.status != 200) {
+      final error = response.data?['error'] ?? 'Unknown error';
+      throw Exception(error);
+    }
+
+    return response.data['script'] as Map<String, dynamic>;
+  }
+
   static Future<Map<String, dynamic>> generateImage({
     required String imageType,
     required String topic,

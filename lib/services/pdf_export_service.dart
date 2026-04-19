@@ -129,6 +129,97 @@ class PdfExportService {
     );
   }
 
+  static Future<void> exportReelScript(Map<String, dynamic> script) async {
+    final pdf = pw.Document();
+
+    pdf.addPage(
+      pw.MultiPage(
+        pageFormat: PdfPageFormat.a4,
+        margin: const pw.EdgeInsets.all(40),
+        header: (context) => _buildHeader('Reel Script'),
+        footer: (context) => _buildFooter(context),
+        build: (context) {
+          final widgets = <pw.Widget>[];
+
+          if (script['title'] != null) {
+            widgets.add(_title(script['title'] as String));
+          }
+
+          if (script['hook'] != null) {
+            widgets.add(_labeledBlock('Hook', script['hook'] as String));
+          }
+
+          final scenes = script['scenes'] as List? ?? [];
+          if (scenes.isNotEmpty) {
+            for (final scene in scenes) {
+              if (scene is Map<String, dynamic>) {
+                final sceneText = StringBuffer();
+                sceneText.writeln('Visual: ${scene['visual'] ?? ''}');
+                if (scene['text_overlay'] != null && (scene['text_overlay'] as String).isNotEmpty) {
+                  sceneText.writeln('Caption: ${scene['text_overlay']}');
+                }
+                if (scene['audio_cue'] != null && (scene['audio_cue'] as String).isNotEmpty) {
+                  sceneText.writeln('Audio: ${scene['audio_cue']}');
+                }
+                if (scene['transition'] != null) {
+                  sceneText.writeln('Transition: ${scene['transition']}');
+                }
+                widgets.add(
+                  _labeledBlock(
+                    'Scene ${scene['scene_number']} (${scene['duration'] ?? ''})',
+                    sceneText.toString().trim(),
+                  ),
+                );
+              }
+            }
+          }
+
+          if (script['voiceover_script'] != null && (script['voiceover_script'] as String).isNotEmpty) {
+            widgets.add(_labeledBlock('Voiceover Script', script['voiceover_script'] as String));
+          }
+
+          final captions = script['caption_sequence'] as List? ?? [];
+          if (captions.isNotEmpty) {
+            widgets.add(_bulletList('Caption Sequence', captions));
+          }
+
+          if (script['music_recommendation'] != null) {
+            widgets.add(_labeledBlock('Music', script['music_recommendation'] as String));
+          }
+
+          final hashtags = script['hashtags'] as List? ?? [];
+          if (hashtags.isNotEmpty) {
+            widgets.add(
+              _labeledBlock(
+                'Hashtags',
+                hashtags.map((t) => t.toString().startsWith('#') ? t : '#$t').join('  '),
+              ),
+            );
+          }
+
+          if (script['posting_tips'] != null) {
+            widgets.add(_labeledBlock('Posting Tips', script['posting_tips'] as String));
+          }
+
+          if (script['estimated_engagement'] != null) {
+            widgets.add(_labeledBlock('Estimated Engagement', script['estimated_engagement'] as String));
+          }
+
+          if (script['raw_text'] != null) {
+            widgets.add(_bodyText(script['raw_text'] as String));
+          }
+
+          return widgets;
+        },
+      ),
+    );
+
+    await Printing.layoutPdf(
+      onLayout: (_) => pdf.save(),
+      name: 'reel-script.pdf',
+    );
+  }
+
   static pw.Widget _buildHeader(String type) {
     return pw.Container(
       margin: const pw.EdgeInsets.only(bottom: 20),

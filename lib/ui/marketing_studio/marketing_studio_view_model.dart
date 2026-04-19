@@ -3,6 +3,7 @@ import '../../data/models/image_config.dart';
 import '../../data/models/print_material_config.dart';
 import '../../data/models/reel_config.dart';
 import '../../services/campaign_service.dart';
+import '../../services/usage_service.dart';
 
 class TabItem {
   final IconData icon;
@@ -20,6 +21,7 @@ class MarketingStudioViewModel extends ChangeNotifier {
   MarketingStudioViewModel() {
     imageTopicController.addListener(notifyListeners);
     imageInstitutionController.addListener(notifyListeners);
+    reelPromptController.addListener(notifyListeners);
   }
 
   int _selectedTab = 0;
@@ -43,6 +45,18 @@ class MarketingStudioViewModel extends ChangeNotifier {
 
   Map<String, dynamic>? _printResult;
   Map<String, dynamic>? get printResult => _printResult;
+
+  // Reel generation state
+  bool _isGeneratingReel = false;
+  bool get isGeneratingReel => _isGeneratingReel;
+
+  String? _reelError;
+  String? get reelError => _reelError;
+
+  Map<String, dynamic>? _reelResult;
+  Map<String, dynamic>? get reelResult => _reelResult;
+
+  bool get isReelFormValid => reelPromptController.text.trim().isNotEmpty;
 
   // Image generation state
   bool _isGeneratingImage = false;
@@ -216,6 +230,7 @@ class MarketingStudioViewModel extends ChangeNotifier {
         keyOfferings: _printConfig.keyOfferings,
         usp: _printConfig.usp,
       );
+      UsageService.incrementPrintMaterial();
     } catch (e) {
       debugPrint('=====================================================================================');
       debugPrint('[StudioVM] PRINT ERROR: $e');
@@ -233,11 +248,47 @@ class MarketingStudioViewModel extends ChangeNotifier {
     notifyListeners();
   }
 
-  void generateReel() {
-    _reelConfig = _reelConfig.copyWith(
-      prompt: reelPromptController.text,
-    );
-    // TODO: Trigger reel generation
+  Future<void> generateReel() async {
+    if (_isGeneratingReel) return;
+
+    final prompt = reelPromptController.text.trim();
+    if (prompt.isEmpty) {
+      _reelError = 'Please describe your reel idea';
+      notifyListeners();
+      return;
+    }
+
+    _reelConfig = _reelConfig.copyWith(prompt: prompt);
+    _isGeneratingReel = true;
+    _reelError = null;
+    _reelResult = null;
+    notifyListeners();
+
+    try {
+      _reelResult = await CampaignService.generateReelScript(
+        prompt: prompt,
+        reelDuration: _reelConfig.reelDuration,
+        reelStyle: _reelConfig.reelStyle,
+        musicGenre: _reelConfig.musicGenre,
+        targetPlatform: _reelConfig.targetPlatform,
+        videoQuality: _reelConfig.videoQuality,
+        scriptLanguage: _reelConfig.scriptLanguage,
+        includeCaptions: _reelConfig.includeCaptions,
+        includeVoiceoverScript: _reelConfig.includeVoiceoverScript,
+      );
+      UsageService.incrementVideo();
+    } catch (e) {
+      _reelError = e.toString().replaceFirst('Exception: ', '');
+    } finally {
+      _isGeneratingReel = false;
+      notifyListeners();
+    }
+  }
+
+  void clearReelResult() {
+    _reelResult = null;
+    _reelError = null;
+    notifyListeners();
   }
 
   // Image config updaters
@@ -306,6 +357,7 @@ class MarketingStudioViewModel extends ChangeNotifier {
         subText: _imageConfig.subText,
         variantCount: 1,
       );
+      UsageService.incrementImage();
     } catch (e) {
       debugPrint('=====================================================================================');
       debugPrint('[StudioVM] IMAGE ERROR: $e');
