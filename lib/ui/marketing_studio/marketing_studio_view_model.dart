@@ -39,6 +39,16 @@ class MarketingStudioViewModel extends ChangeNotifier {
   Map<String, dynamic>? _printResult;
   Map<String, dynamic>? get printResult => _printResult;
 
+  // Image generation state
+  bool _isGeneratingImage = false;
+  bool get isGeneratingImage => _isGeneratingImage;
+
+  String? _imageError;
+  String? get imageError => _imageError;
+
+  Map<String, dynamic>? _imageResult;
+  Map<String, dynamic>? get imageResult => _imageResult;
+
   // Print material controllers
   final topicController = TextEditingController();
   final institutionController = TextEditingController();
@@ -252,14 +262,56 @@ class MarketingStudioViewModel extends ChangeNotifier {
     notifyListeners();
   }
 
-  void generateImage() {
+  Future<void> generateImage() async {
+    if (_isGeneratingImage) return;
+
+    final topic = imageTopicController.text.trim();
+    if (topic.isEmpty) {
+      _imageError = 'Please enter a topic';
+      notifyListeners();
+      return;
+    }
+
     _imageConfig = _imageConfig.copyWith(
-      topic: imageTopicController.text,
-      institution: imageInstitutionController.text,
-      headline: imageHeadlineController.text,
-      subText: imageSubTextController.text,
+      topic: topic,
+      institution: imageInstitutionController.text.trim(),
+      headline: imageHeadlineController.text.trim(),
+      subText: imageSubTextController.text.trim(),
     );
-    // TODO: Trigger image generation
+
+    _isGeneratingImage = true;
+    _imageError = null;
+    _imageResult = null;
+    notifyListeners();
+
+    try {
+      _imageResult = await CampaignService.generateImage(
+        imageType: _imageConfig.imageType,
+        topic: _imageConfig.topic,
+        institution: _imageConfig.institution,
+        aspectRatio: _imageConfig.aspectRatio,
+        visualStyle: _imageConfig.visualStyle,
+        colorScheme: _imageConfig.colorScheme,
+        includeTextOverlay: _imageConfig.includeTextOverlay,
+        headline: _imageConfig.headline,
+        subText: _imageConfig.subText,
+        variantCount: _imageConfig.variantCount,
+      );
+    } catch (e) {
+      debugPrint('=====================================================================================');
+      debugPrint('[StudioVM] IMAGE ERROR: $e');
+      debugPrint('=====================================================================================');
+      _imageError = e.toString().replaceFirst('Exception: ', '');
+    } finally {
+      _isGeneratingImage = false;
+      notifyListeners();
+    }
+  }
+
+  void clearImageResult() {
+    _imageResult = null;
+    _imageError = null;
+    notifyListeners();
   }
 
   @override

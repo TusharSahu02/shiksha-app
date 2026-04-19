@@ -1,0 +1,8 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(curl -s -X POST \"https://gateway.pixazo.ai/flux-dev/v1/dev/textToImage\" -H \"Content-Type: application/json\" -H \"Cache-Control: no-cache\" -H \"Ocp-Apim-Subscription-Key: 900c1c00e3b44b648d6099d900d65139\" --data-raw '{\"prompt\": \"A futuristic city skyline at sunset with flying cars\", \"image_size\": \"landscape_4_3\"}')",
+      "Bash(curl -s -X POST \"https://modelslab.com/api/v7/images/text-to-image\" -H \"Content-Type: application/json\" -d '{\"prompt\": \"A modern education poster for MBBS admissions 2025, professional blue and gold colors\", \"model_id\": \"wan-2.7-t2i\", \"key\": \"w5BRXDO0UFVv5h1W47rd48kBcUH9HvxcOB8iwS8r0slF2A5XDiG21kJg288W\"}')"
+    ]
+  }
+}

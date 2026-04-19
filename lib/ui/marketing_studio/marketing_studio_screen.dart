@@ -1,5 +1,9 @@
+import 'dart:convert';
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:path_provider/path_provider.dart';
 import 'package:provider/provider.dart';
 import 'package:share_plus/share_plus.dart';
 import '../../services/pdf_export_service.dart';
@@ -88,8 +92,16 @@ class _MarketingStudioView extends StatelessWidget {
                 ],
               ] else if (vm.selectedTab == 1)
                 _ReelCreatorForm(vm: vm)
-              else if (vm.selectedTab == 2)
+              else if (vm.selectedTab == 2) ...[
                 _ImageCreatorForm(vm: vm),
+                if (vm.imageResult != null) ...[
+                  const SizedBox(height: 24),
+                  _ImageResultCard(
+                    result: vm.imageResult!,
+                    onClear: vm.clearImageResult,
+                  ),
+                ],
+              ],
             ],
           ),
         ),
@@ -1301,15 +1313,44 @@ class _ImageCreatorForm extends StatelessWidget {
           ),
           const SizedBox(height: 20),
 
+          // Error message
+          if (vm.imageError != null) ...[
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: const Color(0xFFFFEBEE),
+                borderRadius: BorderRadius.circular(10),
+                border: Border.all(color: const Color(0xFFEF9A9A)),
+              ),
+              child: Text(
+                vm.imageError!,
+                style: const TextStyle(fontSize: 13, color: Color(0xFFB71C1C)),
+              ),
+            ),
+            const SizedBox(height: 12),
+          ],
+
           // Generate button
           SizedBox(
             width: double.infinity,
             height: 50,
             child: ElevatedButton.icon(
-              onPressed: vm.generateImage,
-              icon: const Icon(Icons.auto_awesome, size: 18),
+              onPressed: vm.isGeneratingImage ? null : vm.generateImage,
+              icon: vm.isGeneratingImage
+                  ? const SizedBox(
+                      width: 18,
+                      height: 18,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        color: Colors.white,
+                      ),
+                    )
+                  : const Icon(Icons.auto_awesome, size: 18),
               label: Text(
-                'Generate ${vm.imageConfig.variantCount} AI Marketing Image${vm.imageConfig.variantCount > 1 ? 's' : ''}',
+                vm.isGeneratingImage
+                    ? 'Generating...'
+                    : 'Generate ${vm.imageConfig.variantCount} AI Marketing Image${vm.imageConfig.variantCount > 1 ? 's' : ''}',
                 style: const TextStyle(
                   fontSize: 14,
                   fontWeight: FontWeight.w600,
@@ -1318,6 +1359,9 @@ class _ImageCreatorForm extends StatelessWidget {
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppColors.secondary,
                 foregroundColor: Colors.white,
+                disabledBackgroundColor:
+                    AppColors.secondary.withValues(alpha: 0.7),
+                disabledForegroundColor: Colors.white70,
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(12),
                 ),
@@ -1438,6 +1482,210 @@ class _ColorSchemeChip extends StatelessWidget {
         ),
       ),
     );
+  }
+}
+
+class _ImageResultCard extends StatelessWidget {
+  final Map<String, dynamic> result;
+  final VoidCallback onClear;
+
+  const _ImageResultCard({required this.result, required this.onClear});
+
+  @override
+  Widget build(BuildContext context) {
+    final images = (result['images'] as List?)?.cast<String>() ?? [];
+    final prompt = result['prompt'] as String? ?? '';
+    final dims = result['dimensions'] as Map<String, dynamic>?;
+
+    return AppCard(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(Icons.image_outlined, size: 20, color: AppColors.secondary),
+              const SizedBox(width: 8),
+              Text(
+                'Generated Image${images.length > 1 ? 's' : ''}',
+                style: TextStyle(
+                  fontSize: 17,
+                  fontWeight: FontWeight.w700,
+                  color: AppColors.primaryDark,
+                ),
+              ),
+              const Spacer(),
+              IconButton(
+                onPressed: onClear,
+                icon: const Icon(Icons.close, size: 20),
+                padding: EdgeInsets.zero,
+                constraints: const BoxConstraints(),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+
+          for (int i = 0; i < images.length; i++) ...[
+            if (i > 0) const SizedBox(height: 16),
+            ClipRRect(
+              borderRadius: BorderRadius.circular(12),
+              child: Image.memory(
+                base64Decode(images[i]),
+                width: double.infinity,
+                fit: BoxFit.contain,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Row(
+              children: [
+                Expanded(
+                  child: SizedBox(
+                    height: 40,
+                    child: OutlinedButton.icon(
+                      onPressed: () => _saveImage(context, images[i], i),
+                      icon: const Icon(Icons.download, size: 16),
+                      label: const Text(
+                        'Save',
+                        style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
+                      ),
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: AppColors.secondary,
+                        side: BorderSide(color: AppColors.secondary),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: SizedBox(
+                    height: 40,
+                    child: ElevatedButton.icon(
+                      onPressed: () => _shareImage(context, images[i], i),
+                      icon: const Icon(Icons.share, size: 16),
+                      label: const Text(
+                        'Share',
+                        style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
+                      ),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppColors.secondary,
+                        foregroundColor: Colors.white,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        elevation: 0,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ],
+
+          if (prompt.isNotEmpty) ...[
+            const SizedBox(height: 16),
+            const Divider(),
+            const SizedBox(height: 8),
+            Text(
+              'PROMPT USED',
+              style: TextStyle(
+                fontSize: 11,
+                fontWeight: FontWeight.w700,
+                color: AppColors.secondary,
+                letterSpacing: 0.5,
+              ),
+            ),
+            const SizedBox(height: 6),
+            Text(
+              prompt,
+              style: TextStyle(
+                fontSize: 12,
+                height: 1.5,
+                color: AppColors.textSecondary,
+              ),
+            ),
+          ],
+
+          if (dims != null) ...[
+            const SizedBox(height: 8),
+            Text(
+              '${dims['width']}x${dims['height']}px',
+              style: TextStyle(
+                fontSize: 11,
+                color: AppColors.textSecondary.withValues(alpha: 0.6),
+              ),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
+  Future<void> _saveImage(BuildContext context, String base64Image, int index) async {
+    try {
+      final bytes = base64Decode(base64Image);
+      final dir = await getApplicationDocumentsDirectory();
+      final timestamp = DateTime.now().millisecondsSinceEpoch;
+      final file = File('${dir.path}/shiksha_image_${timestamp}_$index.png');
+      await file.writeAsBytes(bytes);
+
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Image saved to ${file.path}'),
+            behavior: SnackBarBehavior.floating,
+            duration: const Duration(seconds: 2),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(10),
+            ),
+          ),
+        );
+      }
+    } catch (e) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed to save: $e'),
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(10),
+            ),
+          ),
+        );
+      }
+    }
+  }
+
+  Future<void> _shareImage(BuildContext context, String base64Image, int index) async {
+    final box = context.findRenderObject() as RenderBox?;
+    try {
+      final bytes = base64Decode(base64Image);
+      final dir = await getTemporaryDirectory();
+      final file = File('${dir.path}/shiksha_image_$index.png');
+      await file.writeAsBytes(bytes);
+
+      await SharePlus.instance.share(
+        ShareParams(
+          files: [XFile(file.path)],
+          text: 'Generated with Shiksha Studio',
+          sharePositionOrigin:
+              box != null ? box.localToGlobal(Offset.zero) & box.size : null,
+        ),
+      );
+    } catch (e) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed to share: $e'),
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(10),
+            ),
+          ),
+        );
+      }
+    }
   }
 }
 

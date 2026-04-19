@@ -105,4 +105,51 @@ class CampaignService {
 
     return response.data['material'] as Map<String, dynamic>;
   }
+
+  static Future<Map<String, dynamic>> generateImage({
+    required String imageType,
+    required String topic,
+    String institution = '',
+    String aspectRatio = '',
+    String visualStyle = '',
+    String colorScheme = '',
+    bool includeTextOverlay = true,
+    String headline = '',
+    String subText = '',
+    int variantCount = 1,
+  }) async {
+    debugPrint('=====================================================================================');
+    debugPrint('[CampaignService] Calling generate-image...');
+    debugPrint('=====================================================================================');
+
+    final response = await _supabase.functions.invoke(
+      'generate-image',
+      body: {
+        'imageType': imageType,
+        'topic': topic,
+        'institution': institution,
+        'aspectRatio': aspectRatio,
+        'visualStyle': visualStyle,
+        'colorScheme': colorScheme,
+        'includeTextOverlay': includeTextOverlay,
+        'headline': headline,
+        'subText': subText,
+        'variantCount': variantCount,
+      },
+    );
+
+    debugPrint('=====================================================================================');
+    debugPrint('[CampaignService] Image Status: ${response.status}');
+    debugPrint('=====================================================================================');
+
+    if (response.status != 200) {
+      final error = response.data?['error'] ?? 'Unknown error';
+      debugPrint('=====================================================================================');
+      debugPrint('[CampaignService] IMAGE ERROR: $error');
+      debugPrint('=====================================================================================');
+      throw Exception(error);
+    }
+
+    return response.data as Map<String, dynamic>;
+  }
 }
