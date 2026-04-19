@@ -118,38 +118,76 @@ class CampaignService {
     String subText = '',
     int variantCount = 1,
   }) async {
+    final body = {
+      'imageType': imageType,
+      'topic': topic,
+      'institution': institution,
+      'aspectRatio': aspectRatio,
+      'visualStyle': visualStyle,
+      'colorScheme': colorScheme,
+      'includeTextOverlay': includeTextOverlay,
+      'headline': headline,
+      'subText': subText,
+      'variantCount': variantCount,
+    };
+
     debugPrint('=====================================================================================');
     debugPrint('[CampaignService] Calling generate-image...');
+    debugPrint('[CampaignService] User: ${_supabase.auth.currentUser?.id}');
+    debugPrint('[CampaignService] Session: ${_supabase.auth.currentSession != null}');
+    debugPrint('[CampaignService] Body: $body');
     debugPrint('=====================================================================================');
 
-    final response = await _supabase.functions.invoke(
-      'generate-image',
-      body: {
-        'imageType': imageType,
-        'topic': topic,
-        'institution': institution,
-        'aspectRatio': aspectRatio,
-        'visualStyle': visualStyle,
-        'colorScheme': colorScheme,
-        'includeTextOverlay': includeTextOverlay,
-        'headline': headline,
-        'subText': subText,
-        'variantCount': variantCount,
-      },
-    );
+    final stopwatch = Stopwatch()..start();
 
-    debugPrint('=====================================================================================');
-    debugPrint('[CampaignService] Image Status: ${response.status}');
-    debugPrint('=====================================================================================');
+    try {
+      final response = await _supabase.functions.invoke(
+        'generate-image',
+        body: body,
+      );
 
-    if (response.status != 200) {
-      final error = response.data?['error'] ?? 'Unknown error';
+      stopwatch.stop();
+
       debugPrint('=====================================================================================');
-      debugPrint('[CampaignService] IMAGE ERROR: $error');
+      debugPrint('[CampaignService] Image Status: ${response.status}');
+      debugPrint('[CampaignService] Time: ${stopwatch.elapsedMilliseconds}ms');
+      debugPrint('[CampaignService] Response type: ${response.data.runtimeType}');
+      if (response.data is Map) {
+        final dataMap = response.data as Map;
+        debugPrint('[CampaignService] Response keys: ${dataMap.keys.toList()}');
+        if (dataMap.containsKey('images')) {
+          final images = dataMap['images'] as List?;
+          debugPrint('[CampaignService] Images count: ${images?.length ?? 0}');
+          if (images != null && images.isNotEmpty) {
+            debugPrint('[CampaignService] First image length: ${images[0].toString().length} chars');
+          }
+        }
+        if (dataMap.containsKey('error')) {
+          debugPrint('[CampaignService] Error: ${dataMap['error']}');
+        }
+        if (dataMap.containsKey('prompt')) {
+          final prompt = dataMap['prompt'] as String? ?? '';
+          debugPrint('[CampaignService] Prompt (first 200): ${prompt.substring(0, prompt.length.clamp(0, 200))}');
+        }
+      } else {
+        debugPrint('[CampaignService] Raw response: ${response.data.toString().substring(0, response.data.toString().length.clamp(0, 500))}');
+      }
       debugPrint('=====================================================================================');
-      throw Exception(error);
+
+      if (response.status != 200) {
+        final error = response.data?['error'] ?? 'Unknown error (status ${response.status})';
+        throw Exception(error);
+      }
+
+      return response.data as Map<String, dynamic>;
+    } catch (e) {
+      stopwatch.stop();
+      debugPrint('=====================================================================================');
+      debugPrint('[CampaignService] IMAGE EXCEPTION after ${stopwatch.elapsedMilliseconds}ms');
+      debugPrint('[CampaignService] Error type: ${e.runtimeType}');
+      debugPrint('[CampaignService] Error: $e');
+      debugPrint('=====================================================================================');
+      rethrow;
     }
-
-    return response.data as Map<String, dynamic>;
   }
 }

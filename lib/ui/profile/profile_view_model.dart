@@ -107,12 +107,54 @@ class ProfileViewModel extends ChangeNotifier {
   }
 
   Future<void> _loadFromDatabase() async {
+    final userId = AuthService.currentUser!.id;
+    final client = Supabase.instance.client;
+
     try {
-      final data = await Supabase.instance.client
+      final monthStart = DateTime(DateTime.now().year, DateTime.now().month, 1).toUtc().toIso8601String();
+
+      final profileFuture = client
           .from('profiles')
           .select('phone, dial_code, institution_name, tagline, institution_email, website, address, key_offerings, usp')
-          .eq('id', AuthService.currentUser!.id)
+          .eq('id', userId)
           .maybeSingle();
+      final subFuture = client
+          .from('subscriptions')
+          .select('tier')
+          .eq('id', userId)
+          .maybeSingle();
+      final imageFuture = client
+          .from('usage_logs')
+          .select('id')
+          .eq('user_id', userId)
+          .eq('feature', 'image')
+          .gte('created_at', monthStart);
+      final videoFuture = client
+          .from('usage_logs')
+          .select('id')
+          .eq('user_id', userId)
+          .eq('feature', 'video')
+          .gte('created_at', monthStart);
+
+      final results = await Future.wait<dynamic>([profileFuture, subFuture, imageFuture, videoFuture]);
+
+      final data = results[0] as Map<String, dynamic>?;
+      final subData = results[1] as Map<String, dynamic>?;
+      final imageRows = results[2] as List;
+      final videoRows = results[3] as List;
+
+      final tierStr = subData?['tier'] as String? ?? 'free';
+      final tier = SubscriptionTier.values.firstWhere(
+        (t) => t.name == tierStr,
+        orElse: () => SubscriptionTier.free,
+      );
+
+      _profile = _profile.copyWith(
+        tier: tier,
+        usedImages: imageRows.length,
+        usedVideos: videoRows.length,
+      );
+
       if (data != null) {
         if (data['dial_code'] != null && (data['dial_code'] as String).isNotEmpty) {
           dialCode = data['dial_code'] as String;
@@ -128,8 +170,8 @@ class ProfileViewModel extends ChangeNotifier {
         addressController.text = data['address'] ?? '';
         keyOfferingsController.text = data['key_offerings'] ?? '';
         uspController.text = data['usp'] ?? '';
-        notifyListeners();
       }
+      notifyListeners();
     } catch (e, st) {
       debugPrint('[ProfileViewModel] _loadFromDatabase error: $e');
       debugPrint('[ProfileViewModel] Stack: $st');

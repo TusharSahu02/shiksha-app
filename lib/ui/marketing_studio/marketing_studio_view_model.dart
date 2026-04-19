@@ -17,6 +17,11 @@ class TabItem {
 }
 
 class MarketingStudioViewModel extends ChangeNotifier {
+  MarketingStudioViewModel() {
+    imageTopicController.addListener(notifyListeners);
+    imageInstitutionController.addListener(notifyListeners);
+  }
+
   int _selectedTab = 0;
   int get selectedTab => _selectedTab;
 
@@ -48,6 +53,10 @@ class MarketingStudioViewModel extends ChangeNotifier {
 
   Map<String, dynamic>? _imageResult;
   Map<String, dynamic>? get imageResult => _imageResult;
+
+  bool get isImageFormValid =>
+      imageTopicController.text.trim().isNotEmpty &&
+      imageInstitutionController.text.trim().isNotEmpty;
 
   // Print material controllers
   final topicController = TextEditingController();
@@ -295,7 +304,7 @@ class MarketingStudioViewModel extends ChangeNotifier {
         includeTextOverlay: _imageConfig.includeTextOverlay,
         headline: _imageConfig.headline,
         subText: _imageConfig.subText,
-        variantCount: _imageConfig.variantCount,
+        variantCount: 1,
       );
     } catch (e) {
       debugPrint('=====================================================================================');

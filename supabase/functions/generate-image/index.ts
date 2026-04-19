@@ -6,7 +6,7 @@ const CF_API_TOKEN = Deno.env.get("CF_API_TOKEN");
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 
-const CF_URL = `https://api.cloudflare.com/client/v4/accounts/${CF_ACCOUNT_ID}/ai/run/@cf/stabilityai/stable-diffusion-xl-base-1.0`;
+const CF_URL = `https://api.cloudflare.com/client/v4/accounts/${CF_ACCOUNT_ID}/ai/run/@cf/black-forest-labs/flux-2-klein-9b`;
 
 const TIER_LIMITS: Record<string, { monthly_images: number }> = {
   free: { monthly_images: 30 },
@@ -121,8 +121,12 @@ Deno.serve(async (req) => {
     return new Response("ok", { headers: corsHeaders });
   }
 
+  const reqStart = Date.now();
+  console.log("[generate-image] Request received:", req.method);
+
   try {
     if (!CF_ACCOUNT_ID || !CF_API_TOKEN) {
+      console.error("[generate-image] Missing CF creds. ACCOUNT_ID:", !!CF_ACCOUNT_ID, "TOKEN:", !!CF_API_TOKEN);
       throw new Error("Cloudflare Workers AI credentials are not set");
     }
 
@@ -188,44 +192,48 @@ Deno.serve(async (req) => {
     const dims = ASPECT_DIMENSIONS[aspectRatio as string] ?? { width: 1024, height: 1024 };
     const prompt = buildPrompt(body);
 
-    const negativePrompt =
-      "no distorted face, no extra limbs, no blurry text, no messy layout, no random text artifacts, no watermark, no logo distortion, no low quality, no pixelation";
+    console.log("[generate-image] User:", user.id, "Tier:", tier, "Variants:", numVariants);
+    console.log("[generate-image] Dims:", dims.width, "x", dims.height);
+    console.log("[generate-image] ========== FLUX PROMPT ==========");
+    console.log(prompt);
+    console.log("[generate-image] ========== END PROMPT ==========");
+    console.log("[generate-image] Calling Cloudflare FLUX 2 Klein 9B...");
 
-    // Generate variants in parallel
-    const imagePromises = Array.from({ length: numVariants }, (_, i) =>
-      fetch(CF_URL, {
+    const cfStart = Date.now();
+
+    // Generate variants in parallel using multipart/form-data
+    const imagePromises = Array.from({ length: numVariants }, (_, i) => {
+      const formData = new FormData();
+      formData.append("prompt", prompt);
+      formData.append("steps", "8");
+      formData.append("width", String(dims.width));
+      formData.append("height", String(dims.height));
+      if (i > 0) {
+        formData.append("seed", String(Math.floor(Math.random() * 2147483647)));
+      }
+
+      return fetch(CF_URL, {
         method: "POST",
         headers: {
           Authorization: `Bearer ${CF_API_TOKEN}`,
-          "Content-Type": "application/json",
         },
-        body: JSON.stringify({
-          prompt,
-          negative_prompt: negativePrompt,
-          width: dims.width,
-          height: dims.height,
-          num_steps: 20,
-          guidance: 7.5,
-          seed: i > 0 ? Math.floor(Math.random() * 2147483647) : undefined,
-        }),
+        body: formData,
       }).then(async (res) => {
-        if (!res.ok) {
-          const err = await res.text();
-          throw new Error(
-            `Cloudflare AI returned ${res.status}: ${err.substring(0, 200)}`
-          );
+        console.log("[generate-image] CF response status:", res.status, "variant:", i);
+        const data = await res.json();
+        if (!res.ok || !data.success) {
+          const errMsg = data.errors?.[0]?.message || JSON.stringify(data.errors) || "Unknown error";
+          console.error("[generate-image] CF error:", errMsg);
+          throw new Error(`Cloudflare AI returned ${res.status}: ${errMsg}`);
         }
-        const buffer = new Uint8Array(await res.arrayBuffer());
-        let binary = "";
-        const chunkSize = 8192;
-        for (let i = 0; i < buffer.length; i += chunkSize) {
-          binary += String.fromCharCode(...buffer.subarray(i, i + chunkSize));
-        }
-        return btoa(binary);
-      })
-    );
+        const imgLen = (data.result.image as string)?.length ?? 0;
+        console.log("[generate-image] Variant", i, "image base64 length:", imgLen);
+        return data.result.image as string;
+      });
+    });
 
     const images = await Promise.all(imagePromises);
+    console.log("[generate-image] All variants done in", Date.now() - cfStart, "ms");
 
     // Log usage (fire-and-forget)
     Promise.all(
@@ -245,6 +253,8 @@ Deno.serve(async (req) => {
       )
       .catch(() => {});
 
+    console.log("[generate-image] SUCCESS. Total time:", Date.now() - reqStart, "ms. Images:", images.length);
+
     return new Response(
       JSON.stringify({
         images,
@@ -256,6 +266,7 @@ Deno.serve(async (req) => {
       }
     );
   } catch (error) {
+    console.error("[generate-image] FATAL ERROR after", Date.now() - reqStart, "ms:", error.message);
     return new Response(JSON.stringify({ error: error.message }), {
       status: 500,
       headers: { ...corsHeaders, "Content-Type": "application/json" },

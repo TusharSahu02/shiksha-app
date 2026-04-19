@@ -1223,33 +1223,6 @@ class _ImageCreatorForm extends StatelessWidget {
             onChanged: (val) => vm.updateVisualStyle(val!),
           ),
 
-          // Color Scheme
-          const AppFormLabel('COLOR SCHEME'),
-          const SizedBox(height: 10),
-          Wrap(
-            spacing: 10,
-            runSpacing: 10,
-            children: const [
-              _ColorSchemeData('Orange & White (Brand Colors)', Color(0xFFF0A030), Colors.white),
-              _ColorSchemeData('Navy Blue & Gold', Color(0xFF1B2A4A), Color(0xFFD4A017)),
-              _ColorSchemeData('Green & White', Color(0xFF2E7D32), Colors.white),
-              _ColorSchemeData('Purple & Silver', Color(0xFF6A1B9A), Color(0xFFC0C0C0)),
-              _ColorSchemeData('Red & White', Color(0xFFD32F2F), Colors.white),
-              _ColorSchemeData('Teal & Orange', Color(0xFF00897B), Color(0xFFF0A030)),
-              _ColorSchemeData('Black & Gold (Premium)', Color(0xFF212121), Color(0xFFD4A017)),
-              _ColorSchemeData('Pastel Soft Tones', Color(0xFFB39DDB), Color(0xFFF8BBD0)),
-            ].map((data) {
-              return _ColorSchemeChip(
-                label: data.label,
-                color1: data.color1,
-                color2: data.color2,
-                isSelected: vm.imageConfig.colorScheme == data.label,
-                onTap: () => vm.updateColorScheme(data.label),
-              );
-            }).toList(),
-          ),
-          const SizedBox(height: 16),
-
           // Include Text Overlay toggle
           Row(
             children: [
@@ -1274,42 +1247,41 @@ class _ImageCreatorForm extends StatelessWidget {
           // Headline & Sub Text (shown when text overlay is on)
           if (vm.imageConfig.includeTextOverlay) ...[
             const SizedBox(height: 12),
-            Row(
-              children: [
-                Expanded(
-                  child: AppTextField(
-                    controller: vm.imageHeadlineController,
-                    hint: 'Main Headline (e.g. Admissions Open 2025)',
-                  ),
-                ),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: AppTextField(
-                    controller: vm.imageSubTextController,
-                    hint: 'Sub Text (e.g. Limited Seats Available)',
-                  ),
-                ),
-              ],
+            AppTextField(
+              controller: vm.imageHeadlineController,
+              hint: 'Main Headline (e.g. Admissions Open 2025)',
+            ),
+            const SizedBox(height: 12),
+            AppTextField(
+              controller: vm.imageSubTextController,
+              hint: 'Sub Text (e.g. Limited Seats Available)',
             ),
           ],
-          const SizedBox(height: 20),
+          const SizedBox(height: 16),
 
-          // Number of variants
-          const AppFormLabel('NUMBER OF VARIANTS TO GENERATE'),
+          // Color Scheme
+          const AppFormLabel('COLOR SCHEME'),
           const SizedBox(height: 10),
-          Row(
-            children: [
-              for (final count in [1, 2, 3]) ...[
-                if (count > 1) const SizedBox(width: 10),
-                Expanded(
-                  child: _VariantChip(
-                    label: '$count Image${count > 1 ? 's' : ''}',
-                    isActive: vm.imageConfig.variantCount == count,
-                    onTap: () => vm.updateVariantCount(count),
-                  ),
-                ),
-              ],
-            ],
+          Wrap(
+            spacing: 10,
+            runSpacing: 10,
+            children: const [
+              _ColorSchemeData('Orange & White (Brand Colors)', Color(0xFFF0A030), Colors.white),
+              _ColorSchemeData('Navy Blue & Gold', Color(0xFF1B2A4A), Color(0xFFD4A017)),
+              _ColorSchemeData('Green & White', Color(0xFF2E7D32), Colors.white),
+              _ColorSchemeData('Purple & Silver', Color(0xFF6A1B9A), Color(0xFFC0C0C0)),
+              _ColorSchemeData('Red & White', Color(0xFFD32F2F), Colors.white),
+              _ColorSchemeData('Teal & Orange', Color(0xFF00897B), Color(0xFFF0A030)),
+              _ColorSchemeData('Black & Gold (Premium)', Color(0xFF212121), Color(0xFFD4A017)),
+              _ColorSchemeData('Pastel Soft Tones', Color(0xFFB39DDB), Color(0xFFF8BBD0)),
+            ].map((data) {
+              return _ColorSchemeChip(
+                color1: data.color1,
+                color2: data.color2,
+                isSelected: vm.imageConfig.colorScheme == data.label,
+                onTap: () => vm.updateColorScheme(data.label),
+              );
+            }).toList(),
           ),
           const SizedBox(height: 20),
 
@@ -1336,7 +1308,9 @@ class _ImageCreatorForm extends StatelessWidget {
             width: double.infinity,
             height: 50,
             child: ElevatedButton.icon(
-              onPressed: vm.isGeneratingImage ? null : vm.generateImage,
+              onPressed: vm.isGeneratingImage || !vm.isImageFormValid
+                  ? null
+                  : vm.generateImage,
               icon: vm.isGeneratingImage
                   ? const SizedBox(
                       width: 18,
@@ -1350,7 +1324,7 @@ class _ImageCreatorForm extends StatelessWidget {
               label: Text(
                 vm.isGeneratingImage
                     ? 'Generating...'
-                    : 'Generate ${vm.imageConfig.variantCount} AI Marketing Image${vm.imageConfig.variantCount > 1 ? 's' : ''}',
+                    : 'Generate AI Marketing Image',
                 style: const TextStyle(
                   fontSize: 14,
                   fontWeight: FontWeight.w600,
@@ -1375,47 +1349,6 @@ class _ImageCreatorForm extends StatelessWidget {
   }
 }
 
-class _VariantChip extends StatelessWidget {
-  final String label;
-  final bool isActive;
-  final VoidCallback onTap;
-
-  const _VariantChip({
-    required this.label,
-    required this.isActive,
-    required this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 12),
-        decoration: BoxDecoration(
-          color: isActive
-              ? AppColors.secondary.withValues(alpha: 0.08)
-              : Colors.transparent,
-          borderRadius: BorderRadius.circular(10),
-          border: Border.all(
-            color: isActive ? AppColors.secondary : const Color(0xFFE0E0E0),
-          ),
-        ),
-        child: Center(
-          child: Text(
-            label,
-            style: TextStyle(
-              fontSize: 13,
-              fontWeight: FontWeight.w600,
-              color: isActive ? AppColors.secondary : AppColors.textSecondary,
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-}
-
 class _ColorSchemeData {
   final String label;
   final Color color1;
@@ -1425,14 +1358,12 @@ class _ColorSchemeData {
 }
 
 class _ColorSchemeChip extends StatelessWidget {
-  final String label;
   final Color color1;
   final Color color2;
   final bool isSelected;
   final VoidCallback onTap;
 
   const _ColorSchemeChip({
-    required this.label,
     required this.color1,
     required this.color2,
     required this.isSelected,
@@ -1444,41 +1375,20 @@ class _ColorSchemeChip extends StatelessWidget {
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        padding: const EdgeInsets.all(10),
+        padding: const EdgeInsets.all(4),
         decoration: BoxDecoration(
-          color: isSelected
-              ? AppColors.secondary.withValues(alpha: 0.08)
-              : Colors.transparent,
           borderRadius: BorderRadius.circular(10),
           border: Border.all(
-            color: isSelected
-                ? AppColors.secondary
-                : const Color(0xFFE0E0E0),
+            color: isSelected ? AppColors.secondary : const Color(0xFFE0E0E0),
+            width: isSelected ? 2 : 1,
           ),
         ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            // Diagonal two-tone square
-            ClipRRect(
-              borderRadius: BorderRadius.circular(6),
-              child: CustomPaint(
-                size: const Size(28, 28),
-                painter: _DiagonalColorPainter(color1, color2),
-              ),
-            ),
-            const SizedBox(width: 8),
-            Text(
-              label,
-              style: TextStyle(
-                fontSize: 11,
-                fontWeight: FontWeight.w600,
-                color: isSelected
-                    ? AppColors.secondary
-                    : AppColors.primaryDark,
-              ),
-            ),
-          ],
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(6),
+          child: CustomPaint(
+            size: const Size(32, 32),
+            painter: _DiagonalColorPainter(color1, color2),
+          ),
         ),
       ),
     );
