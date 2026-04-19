@@ -4,7 +4,6 @@ import '../../data/constants/country_dial_codes.dart';
 import '../../data/models/user_profile.dart';
 import '../../data/models/subscription_tier.dart';
 import '../../services/auth_service.dart';
-import '../auth/auth_screen.dart';
 
 class ProfileViewModel extends ChangeNotifier {
   // Account
@@ -30,49 +29,12 @@ class ProfileViewModel extends ChangeNotifier {
         WidgetsBinding.instance.platformDispatcher.locale.countryCode
             ?.toUpperCase() ??
         '';
-    const isoToCountry = {
-      'IN': 'India',
-      'US': 'United States',
-      'GB': 'United Kingdom',
-      'AU': 'Australia',
-      'CA': 'Canada',
-      'AE': 'United Arab Emirates',
-      'PK': 'Pakistan',
-      'BD': 'Bangladesh',
-      'NP': 'Nepal',
-      'LK': 'Sri Lanka',
-      'DE': 'Germany',
-      'FR': 'France',
-      'SG': 'Singapore',
-      'MY': 'Malaysia',
-      'NG': 'Nigeria',
-      'ZA': 'South Africa',
-      'KE': 'Kenya',
-      'PH': 'Philippines',
-      'ID': 'Indonesia',
-      'BR': 'Brazil',
-      'MX': 'Mexico',
-      'RU': 'Russia',
-      'CN': 'China',
-      'JP': 'Japan',
-      'KR': 'South Korea',
-      'SA': 'Saudi Arabia',
-      'QA': 'Qatar',
-      'KW': 'Kuwait',
-      'BH': 'Bahrain',
-      'OM': 'Oman',
-      'EG': 'Egypt',
-      'TR': 'Turkey',
-      'IT': 'Italy',
-      'ES': 'Spain',
-      'NL': 'Netherlands',
-      'UA': 'Ukraine',
-      'KZ': 'Kazakhstan',
-      'UZ': 'Uzbekistan',
-    };
-    final countryName = isoToCountry[countryCode];
+    final countryName = kIsoToCountryName[countryCode];
     return kCountryDialCodes[countryName] ?? '+91';
   }
+
+  bool _isLoading = true;
+  bool get isLoading => _isLoading;
 
   bool _isSaving = false;
   bool get isSaving => _isSaving;
@@ -168,10 +130,13 @@ class ProfileViewModel extends ChangeNotifier {
         keyOfferingsController.text = data['key_offerings'] ?? '';
         uspController.text = data['usp'] ?? '';
       }
+      _isLoading = false;
       notifyListeners();
     } catch (e, st) {
       debugPrint('[ProfileViewModel] _loadFromDatabase error: $e');
       debugPrint('[ProfileViewModel] Stack: $st');
+      _isLoading = false;
+      notifyListeners();
     }
   }
 
@@ -187,7 +152,7 @@ class ProfileViewModel extends ChangeNotifier {
         'phone': phoneController.text,
         'dial_code': dialCode,
       });
-      await AuthService.updatePhone('${dialCode}${phoneController.text}');
+      await AuthService.updatePhone('$dialCode${phoneController.text}');
       
       _profile = _profile.copyWith(phone: phoneController.text);
       _saveMessage = 'Phone number saved';
@@ -310,62 +275,8 @@ class ProfileViewModel extends ChangeNotifier {
     // TODO: Navigate to change password
   }
 
-  Future<void> signOut(BuildContext context) async {
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: const Text('Sign Out'),
-        content: const Text('Are you sure you want to sign out?'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx, false),
-            child: const Text('Cancel'),
-          ),
-          TextButton(
-            onPressed: () => Navigator.pop(ctx, true),
-            style: TextButton.styleFrom(
-              foregroundColor: const Color(0xFFD32F2F),
-            ),
-            child: const Text('Sign Out'),
-          ),
-        ],
-      ),
-    );
-    if (confirmed != true || !context.mounted) return;
-
-    showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (_) => const PopScope(
-        canPop: false,
-        child: Center(
-          child: Card(
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.all(Radius.circular(16)),
-            ),
-            child: Padding(
-              padding: EdgeInsets.all(32),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  CircularProgressIndicator(),
-                  SizedBox(height: 16),
-                  Text('Signing out...', style: TextStyle(fontSize: 15)),
-                ],
-              ),
-            ),
-          ),
-        ),
-      ),
-    );
-
+  Future<void> signOut() async {
     await AuthService.signOut();
-    if (!context.mounted) return;
-    Navigator.of(context).pushAndRemoveUntil(
-      MaterialPageRoute(builder: (_) => const AuthScreen()),
-      (_) => false,
-    );
   }
 
   void deleteAccount() {
