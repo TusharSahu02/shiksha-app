@@ -545,7 +545,7 @@ class _PrintMaterialsForm extends StatelessWidget {
             width: double.infinity,
             height: 50,
             child: ElevatedButton.icon(
-              onPressed: vm.isGeneratingPrint ? null : vm.generatePrintMaterial,
+              onPressed: vm.isGeneratingPrint || !vm.isPrintFormValid ? null : vm.generatePrintMaterial,
               icon: vm.isGeneratingPrint
                   ? const SizedBox(
                       width: 18,

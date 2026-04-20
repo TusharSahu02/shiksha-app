@@ -4,6 +4,7 @@ import '../../data/constants/country_dial_codes.dart';
 import '../../data/constants/country_languages.dart';
 import '../../data/models/campaign_config.dart';
 import '../../services/campaign_service.dart';
+import '../../services/history_service.dart';
 import '../../services/usage_service.dart';
 
 class GeneratorViewModel extends ChangeNotifier {
@@ -86,9 +87,13 @@ class GeneratorViewModel extends ChangeNotifier {
         phone: fullPhone,
       );
       UsageService.incrementCampaign();
-      debugPrint('=====================================================================================');
-      debugPrint('[GeneratorVM] Generation SUCCESS');
-      debugPrint('=====================================================================================');
+      HistoryService.save(
+        type: 'text',
+        topic: topic,
+        country: _config.country,
+        language: _config.language,
+        output: _campaign!,
+      );
     } catch (e) {
       debugPrint('=====================================================================================');
       debugPrint('[GeneratorVM] GENERATE ERROR: $e');

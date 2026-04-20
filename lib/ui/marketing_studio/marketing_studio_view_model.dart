@@ -3,6 +3,7 @@ import '../../data/models/image_config.dart';
 import '../../data/models/print_material_config.dart';
 import '../../data/models/reel_config.dart';
 import '../../services/campaign_service.dart';
+import '../../services/history_service.dart';
 import '../../services/usage_service.dart';
 
 class TabItem {
@@ -19,6 +20,7 @@ class TabItem {
 
 class MarketingStudioViewModel extends ChangeNotifier {
   MarketingStudioViewModel() {
+    topicController.addListener(notifyListeners);
     imageTopicController.addListener(notifyListeners);
     imageInstitutionController.addListener(notifyListeners);
     reelPromptController.addListener(notifyListeners);
@@ -55,6 +57,8 @@ class MarketingStudioViewModel extends ChangeNotifier {
 
   Map<String, dynamic>? _reelResult;
   Map<String, dynamic>? get reelResult => _reelResult;
+
+  bool get isPrintFormValid => topicController.text.trim().isNotEmpty;
 
   bool get isReelFormValid => reelPromptController.text.trim().isNotEmpty;
 
@@ -231,10 +235,13 @@ class MarketingStudioViewModel extends ChangeNotifier {
         usp: _printConfig.usp,
       );
       UsageService.incrementPrintMaterial();
+      HistoryService.save(
+        type: 'print',
+        topic: _printConfig.topic,
+        output: _printResult!,
+      );
     } catch (e) {
-      debugPrint('=====================================================================================');
       debugPrint('[StudioVM] PRINT ERROR: $e');
-      debugPrint('=====================================================================================');
       _printError = e.toString().replaceFirst('Exception: ', '');
     } finally {
       _isGeneratingPrint = false;
@@ -277,6 +284,11 @@ class MarketingStudioViewModel extends ChangeNotifier {
         includeVoiceoverScript: _reelConfig.includeVoiceoverScript,
       );
       UsageService.incrementVideo();
+      HistoryService.save(
+        type: 'video',
+        topic: prompt,
+        output: _reelResult!,
+      );
     } catch (e) {
       _reelError = e.toString().replaceFirst('Exception: ', '');
     } finally {
@@ -358,10 +370,13 @@ class MarketingStudioViewModel extends ChangeNotifier {
         variantCount: 1,
       );
       UsageService.incrementImage();
+      HistoryService.save(
+        type: 'image',
+        topic: _imageConfig.topic,
+        output: _imageResult!,
+      );
     } catch (e) {
-      debugPrint('=====================================================================================');
       debugPrint('[StudioVM] IMAGE ERROR: $e');
-      debugPrint('=====================================================================================');
       _imageError = e.toString().replaceFirst('Exception: ', '');
     } finally {
       _isGeneratingImage = false;
